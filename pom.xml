@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.gdcc.export</groupId>
+    <artifactId>iso19115_3</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>ISO-19115-3 Exporter</name>
+    <description>Dataverse Plugin to export dataset metadata as xml, following the ISO-19115-3 Geographic schema</description>
+    <url>https://github.com/gdcc/exporter-iso19115-3</url>
+    <scm>
+        <connection>scm:git:https://github.com/gdcc/exporter-iso19115-3.git</connection>
+        <developerConnection>scm:git:git@github.com:gdcc/exporter-iso19115-3.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/gdcc/exporter-iso19115-3</url>
+    </scm>
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>    
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/gdcc/exporter-iso19115-3/issues</url>
+    </issueManagement>
+    <ciManagement>
+        <system>github</system>
+        <url>https://github.com/gdcc/exporter-iso19115-3/actions</url>
+    </ciManagement>
+
+    <parent>
+        <groupId>io.gdcc.export</groupId>
+        <artifactId>parent</artifactId>
+        <version>2.0.0-M2</version>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>fop</artifactId>
+            <version>2.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.13.0</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>2.9.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect</artifactId>
+            <version>2.9.2</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect-optimaize</artifactId>
+            <version>2.9.2</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.20.0-rc1</version>
+        </dependency>
+
+
+    </dependencies>
+
+    <!-- There is no <build> section here because the Parent POM takes care of it -->
+</project>

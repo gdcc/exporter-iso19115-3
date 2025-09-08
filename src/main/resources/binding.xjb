@@ -1,0 +1,13 @@
+<jxb:bindings version="2.1"
+    xmlns:jxb="http://java.sun.com/xml/ns/jaxb"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <!-- Bindings for xlink namespace -->
+    <jxb:bindings schemaLocation="http://www.w3.org/1999/xlink.xsd" node="/xs:schema">
+        <jxb:bindings node="//xs:attribute[@name='title']">
+            <jxb:property name="xlinkTitle"/>
+        </jxb:bindings>
+    </jxb:bindings>
+
+
+</jxb:bindings>

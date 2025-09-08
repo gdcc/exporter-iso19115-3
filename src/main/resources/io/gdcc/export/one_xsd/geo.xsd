@@ -1,0 +1,1129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema 
+	targetNamespace="http://geo.scholarsportal.info/ScholarsGeoPortalISO"
+	xmlns="http://Scholars GeoPortalexportForVictoria/GeoPortal_Schema" 
+	xmlns:sp-geo="http://geo.scholarsportal.info/ScholarsGeoPortalISO" 
+	xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:complexType name="_ReferenceSystem" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_Citation" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_LineageInformation" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_SpatialRepresentation" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_ResourceDescription" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_Responsibility" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_Extent" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_OnlineResource" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_Distribution" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_Constraints" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="_TypedDate" abstract="true">
+	</xs:complexType>
+	<xs:complexType name="CI_Organisation">
+		<xs:annotation>
+			<xs:documentation>
+				information about the party if the party is an organisation
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:CI_Party">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="CI_Series">
+		<xs:annotation>
+			<xs:documentation>
+				information about the series, or aggregate resource, to which a resource belongs
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="name" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="CI_Address">
+		<xs:annotation>
+			<xs:documentation>
+				location of the responsible individual or organisation
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="city" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="administrativeArea" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="country" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="electronicMailAddress" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="CI_OnlineResource">
+		<xs:annotation>
+			<xs:documentation>
+				information about on-line sources from which the resource, specification, or community profile name and extended metadata elements can be obtained
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_OnlineResource">
+				<xs:all>
+					<xs:element name="linkage" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="protocol" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="name" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="description" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="CI_Contact">
+		<xs:annotation>
+			<xs:documentation>
+				information required to enable contact with the responsible person and/or organisation
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="address" type="sp-geo:CI_Address" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="onlineResource" type="sp-geo:CI_OnlineResource" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="CI_Party" abstract="true">
+		<xs:annotation>
+			<xs:documentation>
+				information about the individual and/or organisation of the party
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="name" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="contactInfo" type="sp-geo:CI_Contact" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="CI_RoleCode">
+		<xs:annotation>
+			<xs:documentation>
+				function performed by the responsible party
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="resourceProvider" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="custodian" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="owner" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="user" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="distributor" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="originator" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="pointOfContact" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="principalInvestigator" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="processor" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="publisher" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="author" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="sponsor" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="coAuthor" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="collaborator" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="editor" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="mediator" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="rightsHolder" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="contributor" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="funder" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="stakeholder" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="CI_Responsibility">
+		<xs:annotation>
+			<xs:documentation>
+				information about the party and their role
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_Responsibility">
+				<xs:all>
+					<xs:element name="role" type="sp-geo:CI_RoleCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="party" type="sp-geo:CI_Party" minOccurs="1" maxOccurs="unbounded">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="CI_DateTypeCode">
+		<xs:annotation>
+			<xs:documentation>
+				identification of when a given event occurred
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="creation" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="publication" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="revision" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="expiry" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="lastUpdate" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="lastRevision" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="nextUpdate" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="unavailable" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="inForce" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="adopted" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="deprecated" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="superseded" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="validityBegins" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="validityExpires" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="released" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="distribution" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="CI_Date">
+		<xs:annotation>
+			<xs:documentation>
+				reference date and event used to describe it
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_TypedDate">
+				<xs:all>
+					<xs:element name="date" type="sp-geo:DateTime" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="dateType" type="sp-geo:CI_DateTypeCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="CI_Citation">
+		<xs:annotation>
+			<xs:documentation>
+				standardized resource reference
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_Citation">
+				<xs:all>
+					<xs:element name="title" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="alternateTitle" type="sp-geo:DateTime" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="date" type="sp-geo:CI_Date" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="edition" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="editionDate" type="sp-geo:DateTime" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="identifier" type="sp-geo:MD_Identifier" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="citedResponsibleParty" type="sp-geo:CI_Responsibility" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="series" type="sp-geo:CI_Series" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="otherCitationDetails" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="onlineResource" type="sp-geo:CI_OnlineResource" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>
+								This should be URL of GeoPortal metadata record (the unique URL that leads directly to the dataset metadata)
+							</xs:documentation>
+						</xs:annotation>
+
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_Identifier">
+		<xs:annotation>
+			<xs:documentation>
+				value uniquely identifying an object within a namespace
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="code" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="codeSpace" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_BrowseGraphic">
+		<xs:annotation>
+			<xs:documentation>
+				graphic that provides an illustration of the dataset (should include a legend for the graphic, if applicable)
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="fileName" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="fileDescription" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="fileType" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_ScopeCode">
+		<xs:annotation>
+			<xs:documentation>
+				class of information to which the referencing entity applies
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="attribute" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="attributeType" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="collectionHardware" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="collectionSession" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="dataset" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="series" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="nonGeographicDataset" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="dimensionGroup" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="feature" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="featureType" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="propertyType" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="fieldSession" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="software" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="service" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="model" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="tile" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="metadata" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="initiative" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="sample" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="document" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="repository" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="aggregate" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="product" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="collection" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="coverage" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="application" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_SpatialRepresentationTypeCode">
+		<xs:annotation>
+			<xs:documentation>
+				method used to represent geographic information in the resource
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="vector" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="grid" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="textTable" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="tin" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="stereoModel" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="video" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_RestrictionCode">
+		<xs:annotation>
+			<xs:documentation>
+				limitation(s) placed upon the access or use of the data
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="copyright" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="patent" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="patentPending" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="trademark" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="licence" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="intellectualPropertyRights" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="restricted" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="otherRestrictions" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="unrestricted" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="licenceUnrestricted" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="licenceEndUser" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="licenceDistributor" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="private" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="statutory" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="confidential" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="sensitiveButUnclassified" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="in_confidence" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_LegalConstraints">
+		<xs:annotation>
+			<xs:documentation>
+				restrictions and legal prerequisites for accessing and using the resource or metadata
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:MD_Constraints">
+				<xs:all>
+					<xs:element name="accessConstraints" type="sp-geo:MD_RestrictionCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="useConstraints" type="sp-geo:MD_RestrictionCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="otherConstraints" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_Constraints">
+		<xs:annotation>
+			<xs:documentation>
+				restrictions on the access and use of a resource or metadata
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_Constraints">
+				<xs:all>
+					<xs:element name="useLimitation" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="reference" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_Medium">
+		<xs:annotation>
+			<xs:documentation>
+				information about the media on which the resource can be distributed
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="name" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_Format">
+		<xs:annotation>
+			<xs:documentation>
+				description of the computer language construct that specifies the representation of data objects in a record, file, message, storage device or transmission channel
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="medium" type="sp-geo:MD_Medium" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_Distribution">
+		<xs:annotation>
+			<xs:documentation>
+				information about the distributor of and options for obtaining the resource
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_Distribution">
+				<xs:all>
+					<xs:element name="description" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="transferOptions" type="sp-geo:MD_DigitalTransferOptions" minOccurs="0" maxOccurs="unbounded">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_DigitalTransferOptions">
+		<xs:annotation>
+			<xs:documentation>
+				technical means and media by which a resource is obtained from the distributor
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="onLine" type="sp-geo:_OnlineResource" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="distributionFormat" type="sp-geo:MD_Format" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="EX_GeographicBoundingBox">
+		<xs:annotation>
+			<xs:documentation>
+				geographic position of the resource NOTE: This is only an approximate reference so specifying the coordinate reference system is unnecessary and need only be provided with a precision of up to two decimal places
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:EX_GeographicExtent">
+				<xs:all>
+					<xs:element name="westBoundLongitude" type="xs:decimal" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="eastBoundLongitude" type="xs:decimal" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="southBoundLatitude" type="xs:decimal" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="northBoundLatitude" type="xs:decimal" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:element name="EX_GeographicExtent" abstract="true">
+		<xs:complexType>
+			<xs:annotation>
+				<xs:documentation>
+					spatial area of the resource
+				</xs:documentation>
+			</xs:annotation>
+			<xs:all>
+				<xs:element name="extentTypeCode" type="xs:boolean" minOccurs="0" maxOccurs="1" default="1">
+				</xs:element>
+				<xs:element name="Unnamed_$" type="sp-geo:EX_Extent" minOccurs="0" maxOccurs="1">
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="EX_Extent">
+		<xs:annotation>
+			<xs:documentation>
+				extent of the resource
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_Extent">
+				<xs:all>
+					<xs:element name="description" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element ref="sp-geo:EX_GeographicExtent" minOccurs="0" maxOccurs="unbounded">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="CharacterString">
+	</xs:complexType>
+	<xs:complexType name="DateTime">
+	</xs:complexType>
+	<xs:complexType name="MD_KeywordTypeCode">
+		<xs:annotation>
+			<xs:documentation>
+				methods used to group similar keywords
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="discipline" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="place" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="stratum" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="temporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="theme" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="dataCentre" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="featureType" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="instrument" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="platform" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="process" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="project" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="service" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="product" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="subTopicCategory" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="taxon" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_Keywords">
+		<xs:annotation>
+			<xs:documentation>
+				keywords, their type and reference source NOTE: When the resource described is a service, one instance of MD_Keyword shall refer to the service taxonomy defined in ISO 19119, 8.3)
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="keyword" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="type" type="sp-geo:MD_KeywordTypeCode" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="thesaurusName" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_RepresentativeFraction">
+		<xs:annotation>
+			<xs:documentation>
+				derived from ISO 19103 Scale where MD_RepresentativeFraction.denominator = 1 / Scale.measure And Scale.targetUnits = Scale.sourceUnits
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="denominator" type="xs:positiveInteger" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="DS_AssociationTypeCode">
+		<xs:annotation>
+			<xs:documentation>
+				justification for the correlation of two resources
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="crossReference" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="largerWorkCitation" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="partOfSeamlessDatabase" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="stereoMate" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="isComposedOf" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="collectiveTitle" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="series" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="dependency" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="revisionOf" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_AssociatedResource">
+		<xs:annotation>
+			<xs:documentation>
+				associated resource information NOTE: An associated resource is a dataset composed of a collection of datasets
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="name" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="associationType" type="sp-geo:DS_AssociationTypeCode" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="metadataReference" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_Resolution">
+		<xs:annotation>
+			<xs:documentation>
+				level of detail expressed as a scale factor, a distance or an angle
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="equivalentScale" type="sp-geo:MD_RepresentativeFraction" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_TopicCategoryCode">
+		<xs:annotation>
+			<xs:documentation>
+				high-level geographic data thematic classification to assist in the grouping and search of available geographic data sets. Can be used to group keywords as well. Listed examples are not exhaustive. NOTE: It is understood there are overlaps between general categories and the user is encouraged to select the one most appropriate.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="farming" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="biota" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="boundaries" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="climatologyMeteorologyAtmosphere" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="economy" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="elevation" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="environment" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="geoscientificInformation" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="health" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="imageryBaseMapsEarthCover" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="intelligenceMilitary" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="inlandWaters" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="location" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="oceans" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="planningCadastre" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="society" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="structure" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="transportation" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="utilitiesCommunication" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="extraTerrestrial" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="disaster" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_Identification" abstract="true">
+		<xs:annotation>
+			<xs:documentation>
+				basic information required to uniquely identify a resource or resources
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_ResourceDescription">
+				<xs:all>
+					<xs:element name="citation" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="abstract" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="purpose" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="credit" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="pointOfContact" type="sp-geo:_Responsibility" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="spatialRepresentationType" type="sp-geo:MD_SpatialRepresentationTypeCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="spatialResolution" type="sp-geo:MD_Resolution" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="topicCategory" type="sp-geo:MD_TopicCategoryCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="extent" type="sp-geo:_Extent" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="additionalDocumentation" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="resourceConstraints" type="sp-geo:_Constraints" minOccurs="0" maxOccurs="unbounded">
+					</xs:element>
+					<xs:element name="graphicOverview" type="sp-geo:MD_BrowseGraphic" minOccurs="0" maxOccurs="unbounded">
+					</xs:element>
+					<xs:element name="associatedResource" type="sp-geo:MD_AssociatedResource" minOccurs="0" maxOccurs="unbounded">
+					</xs:element>
+					<xs:element name="descriptiveKeywords" type="sp-geo:MD_Keywords" minOccurs="0" maxOccurs="unbounded">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="LanguageCode">
+	</xs:complexType>
+	<xs:complexType name="CountryCode">
+	</xs:complexType>
+	<xs:complexType name="MD_CharacterSetCode">
+	</xs:complexType>
+	<xs:complexType name="PT_Locale">
+		<xs:all>
+			<xs:element name="language" type="sp-geo:LanguageCode" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="country" type="sp-geo:CountryCode" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="characterEncoding" type="sp-geo:MD_CharacterSetCode" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="LI_ProcessStep">
+		<xs:annotation>
+			<xs:documentation>
+				information about an event or transformation in the life of a resource including the process used to maintain the resource
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="description" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="LI_Lineage">
+		<xs:annotation>
+			<xs:documentation>
+				information about the events or source data used in constructing the data specified by the scope or lack of knowledge about lineage
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_LineageInformation">
+				<xs:all>
+					<xs:element name="statement" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="processStep" type="sp-geo:LI_ProcessStep" minOccurs="0" maxOccurs="unbounded">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_MetadataScope">
+		<xs:all>
+			<xs:element name="resourceScope" type="sp-geo:MD_ScopeCode" minOccurs="0" maxOccurs="1" default="dataset">
+			</xs:element>
+			<xs:element name="name" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_Metadata">
+		<xs:annotation>
+			<xs:documentation>
+				root entity which defines metadata about a resource or resources
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="metadataIdentifier" type="sp-geo:MD_Identifier" minOccurs="1" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>
+						ISO-optional
+					</xs:documentation>
+				</xs:annotation>
+
+			</xs:element>
+			<xs:element name="defaultLocale" type="sp-geo:PT_Locale" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>
+						ISO: Conditional if not defined by encoding and UTF-8 not used.
+					</xs:documentation>
+				</xs:annotation>
+
+			</xs:element>
+			<xs:element name="parentMetadata" type="sp-geo:_Citation" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>
+						ISO: Conditional if there's an upper-level object
+					</xs:documentation>
+				</xs:annotation>
+
+			</xs:element>
+			<xs:element name="contact" type="sp-geo:_Responsibility" minOccurs="1" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="dateInfo" type="sp-geo:_TypedDate" minOccurs="1" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="metadataStandard" type="sp-geo:_Citation" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="metadataProfile" type="sp-geo:_Citation" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="alternativeMetadataReference" type="sp-geo:_Citation" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>
+						OtherID (Dataverse)
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="otherLocale" type="sp-geo:PT_Locale" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="metadataLinkage" type="sp-geo:_OnlineResource" minOccurs="1" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>
+						This should be the GeoPortal record URL (link to GeoPortal)
+					</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="distributionInfo" type="sp-geo:_Distribution" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="identificationInfo" type="sp-geo:_ResourceDescription" minOccurs="1" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="spatialRepresentationInfo" type="sp-geo:_SpatialRepresentation" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="resourceLineage" type="sp-geo:_LineageInformation" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="metadataScope" type="sp-geo:MD_MetadataScope" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+			<xs:element name="referenceSystemInfo" type="sp-geo:_ReferenceSystem" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_ReferenceSystemTypeCode">
+		<xs:annotation>
+			<xs:documentation>
+				defines type of reference system used
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="compoundEngineeringParametric" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundEngineeringParametricTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundEngineeringTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundEngineeringVertical" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundEngineeringVerticalTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundGeographic2DParametric" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundGeographic2DParametricTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundGeographic2DTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundGeographic2DVertical" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundGeographic2DVerticalTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundGeographic3DTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundProjected2DParametric" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundProjected2DParametricTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundProjectedTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundProjectedVertical" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="compoundProjectedVerticalTemporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="engineering" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="engineeringDesign" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="engineeringImage" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="geodeticGeocentric" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="geodeticGeographic2D" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="geodeticGeographic3D" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="geographicIdentifier" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="linear" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="parametric" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="projected" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="temporal" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="vertical" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_ReferenceSystem">
+		<xs:annotation>
+			<xs:documentation>
+				information about the reference system
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_ReferenceSystem">
+				<xs:all>
+					<xs:element name="referenceSystemIdentifier" type="ISO_19115_3_Edition_1_XML_.Metadata_Common_Classes.Common_classes.MD_Identifier" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="referenceSystemType" type="sp-geo:MD_ReferenceSystemTypeCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_GeometricObjectTypeCode">
+		<xs:annotation>
+			<xs:documentation>
+				name of point or vector objects used to locate zero-, one-, two-, or three-dimensional spatial locations in the dataset
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="complex" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="composite" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="curve" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="point" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="solid" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="surface" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_GeometricObjects">
+		<xs:annotation>
+			<xs:documentation>
+				number of objects, listed by geometric object type, used in the dataset
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="geometricObjectType" type="sp-geo:MD_GeometricObjectTypeCode" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="geometricObjectCount" type="xs:positiveInteger" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_DimensionNameTypeCode">
+		<xs:annotation>
+			<xs:documentation>
+				name of the dimension
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="row" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="column" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="vertical" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="track" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="crossTrack" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="line" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="sample" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="time" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_Dimension">
+		<xs:annotation>
+			<xs:documentation>
+				axis properties
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="dimensionName" type="sp-geo:MD_DimensionNameTypeCode" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="dimensionSize" type="xs:integer" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="resolution" type="xs:positiveInteger" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="dimensionTitle" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="dimensionDescription" type="sp-geo:CharacterString" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_CellGeometryCode">
+		<xs:annotation>
+			<xs:documentation>
+				code indicating the geometry represented by the grid cell value
+			</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="point" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="area" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="voxel" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+			<xs:element name="stratum" type="Class" minOccurs="0" maxOccurs="1">
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MD_GridSpatialRepresentation">
+		<xs:annotation>
+			<xs:documentation>
+				information about grid spatial objects in the resource
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:MD_SpatialRepresentation">
+				<xs:all>
+					<xs:element name="numberOfDimensions" type="xs:integer" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="axisDimensionProperties" type="sp-geo:MD_Dimension" minOccurs="0" maxOccurs="1">
+					</xs:element>
+					<xs:element name="cellGeometry" type="sp-geo:MD_CellGeometryCode" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_VectorSpatialRepresentation">
+		<xs:annotation>
+			<xs:documentation>
+				information about the vector spatial objects in the resource
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:MD_SpatialRepresentation">
+				<xs:all>
+					<xs:element name="geometricObjects" type="sp-geo:MD_GeometricObjects" minOccurs="0" maxOccurs="1">
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="MD_SpatialRepresentation" abstract="true">
+		<xs:annotation>
+			<xs:documentation>
+				digital mechanism used to represent spatial information
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="sp-geo:_SpatialRepresentation">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+</xs:schema>

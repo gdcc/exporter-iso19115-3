@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.gdcc.export</groupId>
+  <artifactId>iso19115_3</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>ISO-19115-3 Exporter</name>
+  <description>Dataverse Plugin to export dataset metadata as xml, following the ISO-19115-3 Geographic schema</description>
+  <url>https://github.com/gdcc/exporter-iso19115-3</url>
+  <organization>
+    <name>Global Dataverse Community Consortium</name>
+    <url>https://dataversecommunity.global</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Oliver Bertuch</name>
+      <email>exporters-parent@gdcc.io</email>
+      <url>https://github.com/poikilotherm</url>
+      <organization>Forschungszentrum Jülich GmbH</organization>
+      <organizationUrl>https://www.fz-juelich.de/en/zb</organizationUrl>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/gdcc/exporter-iso19115-3.git</connection>
+    <developerConnection>scm:git:git@github.com:gdcc/exporter-iso19115-3.git</developerConnection>
+    <url>https://github.com/gdcc/exporter-iso19115-3</url>
+  </scm>
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/gdcc/exporter-iso19115-3/issues</url>
+  </issueManagement>
+  <ciManagement>
+    <system>github</system>
+    <url>https://github.com/gdcc/exporter-iso19115-3/actions</url>
+  </ciManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.xmlgraphics</groupId>
+      <artifactId>fop</artifactId>
+      <version>2.9</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.13.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-core</artifactId>
+      <version>2.9.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-langdetect</artifactId>
+      <version>2.9.2</version>
+      <type>pom</type>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-langdetect-optimaize</artifactId>
+      <version>2.9.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.20.0-rc1</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.7.0</version>
+        <extensions>true</extensions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
