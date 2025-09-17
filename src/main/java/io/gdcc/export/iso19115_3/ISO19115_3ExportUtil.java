@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gdcc.spi.export.ExportException;
 import org.apache.fop.apps.FOUserAgent;
 import org.apache.fop.apps.Fop;
 import org.apache.fop.apps.FopFactory;
@@ -45,8 +44,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 
+import java.net.InetAddress;
 import java.net.URL;
 
+import java.net.UnknownHostException;
 import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -89,8 +90,26 @@ class DatasetVersion {
     @JsonProperty("metadataBlocks")
     private Map<String, MetadataBlock> metadataBlocks;
 
+    @JsonProperty("files")
+    private ArrayList<DataverseFiles> files;
+
     @JsonProperty("termsOfUse")
     private String termsOfUse;
+
+    @JsonProperty("restrictions")
+    private String restrictions;
+
+    @JsonProperty("citationrequirements")
+    private String citationrequirements;
+
+    @JsonProperty("depositorrequirements")
+    private String depositorrequirements;
+
+    @JsonProperty("conditions")
+    private String conditions;
+
+    @JsonProperty("disclaimer")
+    private String disclaimer;
 
     @JsonProperty("originalArchive")
     private String originalArchive;
@@ -99,8 +118,32 @@ class DatasetVersion {
         return metadataBlocks;
     }
 
+    public ArrayList<DataverseFiles> getFiles() {
+        return files;
+    }
+
     public String getTermsOfUse() {
         return termsOfUse;
+    }
+
+    public String getRestrictions() {
+        return restrictions;
+    }
+
+    public String getCitationrequirements() {
+        return citationrequirements;
+    }
+
+    public String getDepositorrequirements() {
+        return depositorrequirements;
+    }
+
+    public String getConditions() {
+        return conditions;
+    }
+
+    public String getDisclaimer() {
+        return disclaimer;
     }
 
     public String getOriginalArchive() {
@@ -130,6 +173,68 @@ class MetadataBlock {
         return fields;
     }
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class DataverseFiles {
+    @JsonProperty("description")
+    private String description;
+
+    @JsonProperty("label")
+    private String label;
+
+    @JsonProperty("restricted")
+    private String restricted;
+
+    @JsonProperty("directoryLabel")
+    private String directoryLabel;
+
+    @JsonProperty("dataFile")
+    private DataFile dataFile;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public String getRestricted() {
+        return restricted;
+    }
+
+    public String getDirectoryLabel() {
+        return directoryLabel;
+    }
+
+    public DataFile getDataFile() {
+        return dataFile;
+    }
+}
+@JsonIgnoreProperties(ignoreUnknown = true)
+class DataFile {
+    @JsonProperty("id")
+    private int id;
+
+    @JsonProperty("filename")
+    private String filename;
+
+    @JsonProperty("contentType")
+    private String contentType;
+
+    public int getId() {
+        return id;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+}
+
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -213,17 +318,18 @@ class ControlledVocabularyField extends Field {
 public class ISO19115_3ExportUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(ISO19115_3ExportUtil.class);
-    public static class TitleAndDescription  {
+
+    public static class TitleAndDescription {
         public String Title;
         public String Description;
         public String Language;
     }
-    
+
     private ISO19115_3ExportUtil() {
         // As this is a util class, adding a private constructor disallows instances of this class.
     }
 
-    public  static void parseDataverseJson(InputStream jsonInputStream, OutputStream outputStream)  {
+    public static void parseDataverseJson(InputStream jsonInputStream, OutputStream outputStream) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             logger.info("Read json dataverse");
@@ -232,8 +338,16 @@ public class ISO19115_3ExportUtil {
             MetadataBlock citation = dataset.getDatasetVersion().getMetadataBlocks().get("citation");
             MetadataBlock geospatial = dataset.getDatasetVersion().getMetadataBlocks().get("geospatial");
 
+            String restrictions = dataset.getDatasetVersion().getRestrictions();
+            String citationrequirements = dataset.getDatasetVersion().getCitationrequirements();
+            String depositorrequirements = dataset.getDatasetVersion().getDepositorrequirements();
+            String conditions = dataset.getDatasetVersion().getConditions();
+            String disclaimer = dataset.getDatasetVersion().getDisclaimer();
+
+            ArrayList<DataverseFiles> dataversFiles = dataset.getDatasetVersion().getFiles();
+
             logger.info("Block: " + citation.getDisplayName());
-            logger.info("Block: " + geospatial.getDisplayName());
+            //logger.info("Block: " + geospatial.getDisplayName());
 
             Field geographicBoundingBox = null;
             Field otherId = null;
@@ -245,33 +359,64 @@ public class ISO19115_3ExportUtil {
             Field alternativeTitle = null;
             Field distributionDate = null;
             Field distribution = null;
-            Field geoReferenceDate = null;
+            Field referenceDate = null;
             Field topicClassification = null;
             Field note = null;
             Field series = null;
             Field software = null;
-            Field lineageStatement  = null;
-            Field sourceDescription  = null;
-            Field processStep  = null;
-            Field spatialResolution  = null;
+            Field lineageStatement = null;
+            Field sourceDescription = null;
+            Field processStep = null;
+            Field spatialResolution = null;
             Field spatialRepresentationType = null;
-            Field geometricObjectCount  = null;
-            Field geometricObjectTypeCode  = null;
-            Field datasetContact  = null;
-            Field description  = null;
-            
-            
+            Field geometricObjectCount = null;
+            Field geometricObjectType = null;
+            Field datasetContact = null;
+            Field description = null;
+            Field publication = null;
+            Field producer = null;
+            Field distributor = null;
+            Field dateOfDeposit = null;
+            Field timePeriodCovered = null;
+            Field otherReferences = null;
+            Field characteristicOfSources = null;
+            Field geographicCoverage = null;
+            Field contributor = null;
+            Field geographicUnit = null;
+            Field productionDate = null;
+            Field resourceType = null;
+            Field numberOfDimensions = null;
+            Field axisDimensionProperties = null;
+            Field cellGeometry = null;
+            //Field relatedDatasets = null;
+
 
             for (Field f : citation.getFields()) {
                 if (f.getTypeName().equals("otherId")) {
                     otherId = f;
                 }
-                if (f.getTypeName().equals("language")){
+                if (f.getTypeName().equals("language")) {
                     language = f;
                 }
                 if (f.getTypeName().equals("keyword")) {
                     keyword = f;
                 }
+                if (f.getTypeName().equals("publication")) {
+                    publication = f;
+                }
+                if (f.getTypeName().equals("producer")) {
+                    producer = f;
+                }
+                if (f.getTypeName().equals("distributor")) {
+                    distributor = f;
+                }
+                if (f.getTypeName().equals("dateOfDeposit")) {
+                    dateOfDeposit = f;
+                }
+                if (f.getTypeName().equals("timePeriodCovered")) {
+                    timePeriodCovered = f;
+                }
+
                 if (f.getTypeName().equals("author")) {
                     author = f;
                 }
@@ -287,7 +432,7 @@ public class ISO19115_3ExportUtil {
                 if (f.getTypeName().equals("topicClassification")) {
                     topicClassification = f;
                 }
-                if (f.getTypeName().equals("notesText"))  {
+                if (f.getTypeName().equals("notesText")) {
                     note = f;
                 }
                 if (f.getTypeName().equals("series")) {
@@ -303,42 +448,80 @@ public class ISO19115_3ExportUtil {
                     logger.info("Found description field");
                     description = f;
                 }
+//                if (f.getTypeName().equals("dataSources")) {
+//                    sourceDescription = f;
+//                }
+
+                if (f.getTypeName().equals("otherReferences")) {
+                    otherReferences = f;
+                }
+
+                if (f.getTypeName().equals("characteristicOfSources")) {
+                    characteristicOfSources = f;
+                }
+
+                if (f.getTypeName().equals("contributor")) {
+                    contributor = f;
+                }
+
+                if (f.getTypeName().equals("productionDate")) {
+                    productionDate = f;
+                }
+
 
             }
+            if (geospatial != null) {
 
-            for (Field f : geospatial.getFields()) {
-                if (f.getTypeName().equals("geographicBoundingBox")) {
-                    geographicBoundingBox = f;
-                }
-                if (f.getTypeName().equals("referenceSystemInfo")) {
-                    referenceSystemInfo = f;
-                }
-                if (f.getTypeName().equals("distribution")) {
-                    distribution = f;
-                }
-                if (f.getTypeName().equals("geoReferenceDate")) {
-                    geoReferenceDate = f;
-                }
-                if (f.getTypeName().equals("lineageStatement")) {
-                    lineageStatement = f;
-                }
-                if (f.getTypeName().equals("sourceDescription")) {
-                    sourceDescription = f;
-                }
-                if (f.getTypeName().equals("processStep")) {
-                    processStep = f;
-                }
-                if (f.getTypeName().equals("spatialResolution")) {
-                    spatialResolution = f;
-                }
-                if (f.getTypeName().equals("spatialRepresentationType")) {
-                    spatialRepresentationType = f;
-                }
-                if (f.getTypeName().equals("geometricObjectCount")) {
-                    geometricObjectCount = f;
-                }
-                if (f.getTypeName().equals("geometricObjectTypeCode")) {
-                    geometricObjectTypeCode = f;
+                for (Field f : geospatial.getFields()) {
+                    if (f.getTypeName().equals("geographicBoundingBox")) {
+                        geographicBoundingBox = f;
+                    }
+                    if (f.getTypeName().equals("referenceSystemInfo")) {
+                        referenceSystemInfo = f;
+                    }
+                    if (f.getTypeName().equals("distribution")) {
+                        distribution = f;
+                    }
+                    if (f.getTypeName().equals("referenceDate")) {
+                        referenceDate = f;
+                    }
+                    if (f.getTypeName().equals("dataLineageStatement")) {
+                        lineageStatement = f;
+                    }
+
+                    if (f.getTypeName().equals("processStep")) {
+                        processStep = f;
+                    }
+                    if (f.getTypeName().equals("spatialResolution")) {
+                        spatialResolution = f;
+                    }
+                    if (f.getTypeName().equals("spatialRepresentationType")) {
+                        spatialRepresentationType = f;
+                    }
+                    if (f.getTypeName().equals("geometricObjectCount")) {
+                        geometricObjectCount = f;
+                    }
+                    if (f.getTypeName().equals("geometricObjectType")) {
+                        geometricObjectType = f;
+                    }
+                    if (f.getTypeName().equals("geographicCoverage")) {
+                        geographicCoverage = f;
+                    }
+                    if (f.getTypeName().equals("geographicUnit")) {
+                        geographicUnit = f;
+                    }
+                    if (f.getTypeName().equals("resourceType")) {
+                        resourceType = f;
+                    }
+                    if (f.getTypeName().equals("numberOfDimensions")) {
+                        numberOfDimensions = f;
+                    }
+                    if (f.getTypeName().equals("axisDimensionProperties")) {
+                        axisDimensionProperties = f;
+                    }
+                    if (f.getTypeName().equals("cellGeometry")) {
+                        cellGeometry = f;
+                    }
                 }
             }
 
@@ -346,34 +529,48 @@ public class ISO19115_3ExportUtil {
             logger.info("Finished reading json");
 
 
-
-            XMLStreamWriter xmlw = XMLOutputFactory.newInstance().createXMLStreamWriter(outputStream);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            XMLStreamWriter xmlw = XMLOutputFactory.newInstance().createXMLStreamWriter(baos);
+            //XMLStreamWriter xmlw = XMLOutputFactory.newInstance().createXMLStreamWriter(outputStream);
             xmlw.writeStartDocument();
             xmlw.writeStartElement("mdb:MD_Metadata");
             writeNamespaces(xmlw);
             writeDatasetPersistentId(xmlw, dataset.getIdentifier(), dataset.getAuthority(), dataset.getProtocol());
             writeDefaultLocale(xmlw, language);
             writeEmptyPrereq(xmlw);
+            writeMetadataScope(xmlw, resourceType);
+
             logger.info("Before writeDateInfo");
-            writeDateInfo(xmlw, description);
+            writeDateInfo(xmlw, description, "revised");
+            writeDateDepositeInfo(xmlw, dateOfDeposit);
+            //writeAlternativeMetadataReferenceForDataset(xmlw);
             writeAlternativeMetadataReference(xmlw, otherId);
-            writeSpatialRepresentationInfo(xmlw, geometricObjectCount,  geometricObjectTypeCode);
+            writeSpatialRepresentationInfo(xmlw, geometricObjectCount, geometricObjectType, numberOfDimensions,
+                    axisDimensionProperties, cellGeometry);
             writeReferenceSystemInfo(xmlw, referenceSystemInfo);
             writeIdentificationInfo(xmlw, geographicBoundingBox, keyword, author,
-                    title,  alternativeTitle,  distributionDate,  geoReferenceDate,
+                    title, alternativeTitle, distributionDate, referenceDate,
                     topicClassification, note, series, software,
                     spatialResolution, spatialRepresentationType, dataset.getDatasetVersion().getTermsOfUse(),
-                    datasetContact, description);
-            writeDistributionInfo(xmlw, distribution);
-            writeResourceLineage(xmlw, lineageStatement, sourceDescription, processStep ); //unclear
+                    datasetContact, description, publication, producer, timePeriodCovered, otherReferences, geographicCoverage,
+                    contributor, geographicUnit, productionDate, restrictions, citationrequirements,
+                    depositorrequirements, conditions, disclaimer, dataversFiles);
+            writeDistributionInfo(xmlw, distribution, distributor);
+            writeResourceLineage(xmlw, lineageStatement, processStep, characteristicOfSources); //unclear
             writeMetadataMaintenance(xmlw, dataset.getDatasetVersion().getOriginalArchive());
-
             xmlw.writeEndElement(); // MD_Metadata
             xmlw.writeEndDocument();
             xmlw.flush();
+            xmlw.close();
             logger.info("Befor validation starting");
-            ISO_Validator.validate(outputStream, "iso19115-3");
+            InputStream in = new ByteArrayInputStream(baos.toByteArray());
+
+//
+            ISO_Validator isoVal = new ISO_Validator("19115/-3/mdb/2.0/mdb.xsd");
+            isoVal.validate(in);
             logger.info("After validation ending");
+            outputStream.write(baos.toByteArray());
+            logger.info("After write to outputstream");
 
         } catch (XMLStreamException xse) {
             throw new RuntimeException(xse);
@@ -383,7 +580,7 @@ public class ISO19115_3ExportUtil {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (SAXException e) {
+        } catch (Exception e) {
             logger.error("XML Validation Error: " + e.getMessage());
             throw new RuntimeException(e);
         }
@@ -396,38 +593,111 @@ public class ISO19115_3ExportUtil {
 
     }
 
+    private static void writeDateDepositeInfo(XMLStreamWriter xmlw, Field dateOfDeposit) throws XMLStreamException {
+        logger.info("writeDateDepositeInfo");
+        if (dateOfDeposit != null) {
+            xmlw.writeStartElement("mdb:dateInfo");
+            String date = ((PrimitiveField) dateOfDeposit).getSingleValue();
+            if (date != null && !date.isEmpty()) {
+                dateISO(xmlw, date, "released");
+            }
+            xmlw.writeEndElement();
+        }
+    }
+
     private static void writeNamespaces(XMLStreamWriter xmlw) throws XMLStreamException {
+        xmlw.writeAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        xmlw.writeAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        xmlw.writeAttribute("xmlns:gml", "http://www.opengis.net/gml/3.2");
         xmlw.writeAttribute("xmlns:cat", "http://standards.iso.org/iso/19115/-3/cat/1.0");
-        xmlw.writeAttribute("xmlns:cit","http://standards.iso.org/iso/19115/-3/cit/2.0");
-        //xmlw.writeAttribute("xmlns:dc","http://purl.org/dc/terms/");
+        xmlw.writeAttribute("xmlns:gco", "http://standards.iso.org/iso/19115/-3/gco/1.0");
         xmlw.writeAttribute("xmlns:gcx", "http://standards.iso.org/iso/19115/-3/gcx/1.0");
         xmlw.writeAttribute("xmlns:gex", "http://standards.iso.org/iso/19115/-3/gex/1.0");
         xmlw.writeAttribute("xmlns:lan", "http://standards.iso.org/iso/19115/-3/lan/1.0");
-        xmlw.writeAttribute("xmlns:srv", "http://standards.iso.org/iso/19115/-3/srv/2.0");
-        xmlw.writeAttribute("xmlns:mac", "http://standards.iso.org/iso/19115/-3/mac/2.0");
         xmlw.writeAttribute("xmlns:mas", "http://standards.iso.org/iso/19115/-3/mas/1.0");
         xmlw.writeAttribute("xmlns:mcc", "http://standards.iso.org/iso/19115/-3/mcc/1.0");
-        xmlw.writeAttribute("xmlns:mco", "http://standards.iso.org/iso/19115/-3/mco/1.0" );
+        xmlw.writeAttribute("xmlns:mco", "http://standards.iso.org/iso/19115/-3/mco/1.0");
         xmlw.writeAttribute("xmlns:mda", "http://standards.iso.org/iso/19115/-3/mda/1.0");
-        xmlw.writeAttribute("xmlns:mdb","http://standards.iso.org/iso/19115/-3/mdb/2.0");
-        xmlw.writeAttribute("xmlns:mdt", "http://standards.iso.org/iso/19115/-3/mdt/1.0");
+        xmlw.writeAttribute("xmlns:mdq", "http://standards.iso.org/iso/19157/-2/mdq/1.0");
         xmlw.writeAttribute("xmlns:mex", "http://standards.iso.org/iso/19115/-3/mex/1.0");
-        xmlw.writeAttribute("xmlns:mrl", "http://standards.iso.org/iso/19115/-3/mrl/1.0");
-        xmlw.writeAttribute("xmlns:mds","http://standards.iso.org/iso/19115/-3/mds/1.0");
         xmlw.writeAttribute("xmlns:mmi", "http://standards.iso.org/iso/19115/-3/mmi/1.0");
         xmlw.writeAttribute("xmlns:mpc", "http://standards.iso.org/iso/19115/-3/mpc/1.0");
-        xmlw.writeAttribute("xmlns:mrc", "http://standards.iso.org/iso/19115/-3/mrc/2.0");
         xmlw.writeAttribute("xmlns:mrd", "http://standards.iso.org/iso/19115/-3/mrd/1.0");
         xmlw.writeAttribute("xmlns:mri", "http://standards.iso.org/iso/19115/-3/mri/1.0");
         xmlw.writeAttribute("xmlns:mrs", "http://standards.iso.org/iso/19115/-3/mrs/1.0");
-        xmlw.writeAttribute("xmlns:msr","http://standards.iso.org/iso/19115/-3/msr/2.0");
-        xmlw.writeAttribute("xmlns:mdq", "http://standards.iso.org/iso/19157/-2/mdq/1.0" );
-        xmlw.writeAttribute("xmlns:dqc", "http://standards.iso.org/iso/19157/-2/dqc/1.0");
-        xmlw.writeAttribute("xmlns:gco", "http://standards.iso.org/iso/19115/-3/gco/1.0");
-        xmlw.writeAttribute("xmlns:gfc", "http://standards.iso.org/iso/19110/gfc/1.1");
-        xmlw.writeAttribute("xmlns:gml", "http://www.opengis.net/gml/3.2" );
-        xmlw.writeAttribute("xmlns:xlink","http://www.w3.org/1999/xlink" );
-        xmlw.writeAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+
+
+        xmlw.writeAttribute("xmlns:cit", "http://standards.iso.org/iso/19115/-3/cit/2.0");
+        xmlw.writeAttribute("xmlns:mac", "http://standards.iso.org/iso/19115/-3/mac/2.0");
+        xmlw.writeAttribute("xmlns:mdb", "http://standards.iso.org/iso/19115/-3/mdb/2.0");
+        xmlw.writeAttribute("xmlns:mds", "http://standards.iso.org/iso/19115/-3/mds/2.0");
+        xmlw.writeAttribute("xmlns:mdt", "http://standards.iso.org/iso/19115/-3/mdt/2.0");
+        xmlw.writeAttribute("xmlns:mrl", "http://standards.iso.org/iso/19115/-3/mrl/2.0");
+        xmlw.writeAttribute("xmlns:mrc", "http://standards.iso.org/iso/19115/-3/mrc/2.0");
+        xmlw.writeAttribute("xmlns:msr", "http://standards.iso.org/iso/19115/-3/msr/2.0");
+        xmlw.writeAttribute("xmlns:srv", "http://standards.iso.org/iso/19115/-3/srv/2.0");
+
+        //        xmlw.writeAttribute("xmlns:cat", "http://standards.iso.org/iso/19115/-3/cat/1.0");
+//        xmlw.writeAttribute("xmlns:cit","http://standards.iso.org/iso/19115/-3/cit/2.0");
+//        //xmlw.writeAttribute("xmlns:dc","http://purl.org/dc/terms/");
+//        xmlw.writeAttribute("xmlns:gcx", "http://standards.iso.org/iso/19115/-3/gcx/1.0");
+//        xmlw.writeAttribute("xmlns:gex", "http://standards.iso.org/iso/19115/-3/gex/1.0");
+//        xmlw.writeAttribute("xmlns:lan", "http://standards.iso.org/iso/19115/-3/lan/1.0");
+//        xmlw.writeAttribute("xmlns:srv", "http://standards.iso.org/iso/19115/-3/srv/2.0");
+//        xmlw.writeAttribute("xmlns:mac", "http://standards.iso.org/iso/19115/-3/mac/2.0");
+//        xmlw.writeAttribute("xmlns:mas", "http://standards.iso.org/iso/19115/-3/mas/1.0");
+//        xmlw.writeAttribute("xmlns:mcc", "http://standards.iso.org/iso/19115/-3/mcc/1.0");
+//        xmlw.writeAttribute("xmlns:mco", "http://standards.iso.org/iso/19115/-3/mco/1.0" );
+//        xmlw.writeAttribute("xmlns:mda", "http://standards.iso.org/iso/19115/-3/mda/2.0");
+//        xmlw.writeAttribute("xmlns:mdb","http://standards.iso.org/iso/19115/-3/mdb/2.0");
+//        xmlw.writeAttribute("xmlns:mdt", "http://standards.iso.org/iso/19115/-3/mdt/1.0");
+//        xmlw.writeAttribute("xmlns:mex", "http://standards.iso.org/iso/19115/-3/mex/1.0");
+//        xmlw.writeAttribute("xmlns:mrl", "http://standards.iso.org/iso/19115/-3/mrl/2.0");
+//        xmlw.writeAttribute("xmlns:mds","http://standards.iso.org/iso/19115/-3/mds/2.0");
+//        xmlw.writeAttribute("xmlns:mmi", "http://standards.iso.org/iso/19115/-3/mmi/1.0");
+//        xmlw.writeAttribute("xmlns:mpc", "http://standards.iso.org/iso/19115/-3/mpc/1.0");
+//        xmlw.writeAttribute("xmlns:mrc", "http://standards.iso.org/iso/19115/-3/mrc/2.0");
+//        xmlw.writeAttribute("xmlns:mrd", "http://standards.iso.org/iso/19115/-3/mrd/1.0");
+//        xmlw.writeAttribute("xmlns:mri", "http://standards.iso.org/iso/19115/-3/mri/1.0");
+//        xmlw.writeAttribute("xmlns:mrs", "http://standards.iso.org/iso/19115/-3/mrs/1.0");
+//        xmlw.writeAttribute("xmlns:msr","http://standards.iso.org/iso/19115/-3/msr/2.0");
+//        xmlw.writeAttribute("xmlns:mdq", "http://standards.iso.org/iso/19157/-2/mdq/1.0" );
+//        xmlw.writeAttribute("xmlns:dqc", "http://standards.iso.org/iso/19157/-2/dqc/1.0");
+//        xmlw.writeAttribute("xmlns:gco", "http://standards.iso.org/iso/19115/-3/gco/1.0");
+//        xmlw.writeAttribute("xmlns:gfc", "http://standards.iso.org/iso/19110/gfc/1.1");
+//        xmlw.writeAttribute("xmlns:gml", "http://www.opengis.net/gml/3.2" );
+//        xmlw.writeAttribute("xmlns:xlink","http://www.w3.org/1999/xlink" );
+//        xmlw.writeAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+
+    }
+
+    private static void writeMetadataScope(XMLStreamWriter xmlw, Field resourceType) throws XMLStreamException {
+        //mdb:MD_Metadata/mdb:metadataScope/mdb:MD_MetadataScope
+        if (resourceType != null) {
+            String resType = ((ControlledVocabularyField) resourceType).getSingleValue();
+            if (resType != null && !resType.isEmpty()) {
+                xmlw.writeStartElement("mdb:metadataScope");
+                xmlw.writeStartElement("mdb:MD_MetadataScope");
+//                <mdb:resourceScope>
+//                        <mcc:MD_ScopeCode codeList="http://standards.iso.org/iso/19115/-3/mcc/1.0/codelists.xml#MD_ScopeCode"
+//                codeListValue="dataset">dataset</mcc:MD_ScopeCode>
+//                        </mdb:resourceScope>
+//                        <mdb:name>
+//                        <gco:CharacterString>Main dataset metadata</gco:CharacterString>
+//                        </mdb:name>
+                xmlw.writeStartElement("mdb:resourceScope");
+                xmlw.writeStartElement("mcc:MD_ScopeCode");
+                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/mcc/codelists.xml#MD_ScopeCode");
+                xmlw.writeAttribute("codeListValue", resType);
+                xmlw.writeCharacters(resType);
+                xmlw.writeEndElement(); //mcc:MD_ScopeCode
+                xmlw.writeEndElement(); //mdb:resourceScope
+                xmlw.writeEndElement(); //mdb:MD_MetadataScope
+                xmlw.writeEndElement(); //mdb:metadataScope
+                xmlw.writeStartElement("mdb:contact");
+                xmlw.writeEndElement();
+            }
+        }
     }
 
     private static void writeDatasetPersistentId(XMLStreamWriter xmlw, String persistentId, String authority, String protocol) throws XMLStreamException {
@@ -442,8 +712,8 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //cit:title
         xmlw.writeStartElement("cit:presentationForm");
         xmlw.writeStartElement("cit:CI_PresentationFormCode");
-        xmlw.writeAttribute("codeList" ,"http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
-        xmlw.writeAttribute("codeListValue","multimediaHardcopy");
+        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
+        xmlw.writeAttribute("codeListValue", "multimediaHardcopy");
         xmlw.writeCharacters("multimediaHardcopy");
         xmlw.writeEndElement(); //cit:CI_PresentationFormCode
         xmlw.writeEndElement(); //cit:presentationForm
@@ -451,13 +721,14 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //mcc:authority
         xmlw.writeStartElement("mcc:code");
         xmlw.writeStartElement("gco:CharacterString");
-        xmlw.writeCharacters(protocol+ ":"+ authority + "/" + persistentId);
+        xmlw.writeCharacters(protocol + ":" + authority + "/" + persistentId);
         xmlw.writeEndElement(); //gco:CharacterString
         xmlw.writeEndElement(); //mcc:code
         xmlw.writeEndElement(); //mcc:MD_Identifier
         xmlw.writeEndElement(); //mdb:metadataIdentifier
 
     }
+
     private static void writeDefaultLocale(XMLStreamWriter xmlw, Field langF) throws XMLStreamException {
 
         logger.info("writeDefaultLocale");
@@ -479,21 +750,21 @@ public class ISO19115_3ExportUtil {
         xmlw.writeStartElement("lan:PT_Locale");
         xmlw.writeStartElement("lan:language");
         xmlw.writeStartElement("lan:LanguageCode");
-        xmlw.writeAttribute("codeList","http://www.loc.gov/standards/iso639-2/");
+        xmlw.writeAttribute("codeList", "http://www.loc.gov/standards/iso639-2/");
         xmlw.writeAttribute("codeListValue", "eng");
         xmlw.writeCharacters(language);
         xmlw.writeEndElement(); //LanguageCode
         xmlw.writeEndElement(); //language
         xmlw.writeStartElement("lan:country");
         xmlw.writeStartElement("lan:CountryCode");
-        xmlw.writeAttribute("codeList","http://www.loc.gov/standards/iso366-1/");
+        xmlw.writeAttribute("codeList", "http://www.loc.gov/standards/iso366-1/");
         xmlw.writeAttribute("codeListValue", "can");
         xmlw.writeCharacters("can");
         xmlw.writeEndElement(); //CountryCode
         xmlw.writeEndElement(); //country
         xmlw.writeStartElement("lan:characterEncoding");
         xmlw.writeStartElement("lan:MD_CharacterSetCode");
-        xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_CharacterSetCode");
+        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_CharacterSetCode");
         xmlw.writeAttribute("codeListValue", "utf8");
         xmlw.writeCharacters("utf8");
         xmlw.writeEndElement(); //MD_CharacterSetCode
@@ -508,22 +779,24 @@ public class ISO19115_3ExportUtil {
         xmlw.writeStartElement("mdb:parentMetadata");
         xmlw.writeEndElement();
 
-        xmlw.writeStartElement("mdb:metadataScope");
-        xmlw.writeEndElement();
-
-        xmlw.writeStartElement("mdb:contact");
-        xmlw.writeEndElement();
+//        xmlw.writeStartElement("mdb:metadataScope");
+//        xmlw.writeEndElement();
+//
+//        xmlw.writeStartElement("mdb:contact");
+//        xmlw.writeEndElement();
 
 //        <mdb:parentMetadata/>        <!-- optional, empty -->
 //                <mdb:metadataScope/>         <!-- optional, empty -->
 //                <mdb:contact/>               <!-- optional, empty -->
     }
 
-    private static void writeDateInfo(XMLStreamWriter xmlw, Field descriptionF) throws XMLStreamException {
+    private static void writeDateInfo(XMLStreamWriter xmlw, Field descriptionF, String code) throws XMLStreamException {
         logger.info("writeDateInfo");
         if (descriptionF != null) {
+            xmlw.writeStartElement("mdb:dateInfo");
 
             for (HashMap<String, Field> foo : ((CompoundField) descriptionF).getMultipleValues()) {
+
                 logger.info("Got foo");
                 String date = "";
                 PrimitiveField descDate = (PrimitiveField) foo.get("dsDescriptionDate");
@@ -534,13 +807,22 @@ public class ISO19115_3ExportUtil {
                 }
                 if (date != null && !date.isEmpty()) {
                     //mdb:dateInfo/cit:CI_Date/cit:date/gco:DateTime
-                    xmlw.writeStartElement("mdb:dateInfo");
-                    dateISO(xmlw, date, "publication"); //For description (abstract) date code is not clear
-                    xmlw.writeEndElement(); //mdb:dateInfo
+                    //code=publication
+                    dateISO(xmlw, date, code); //For description (abstract) date code is not clear
+                    break; //only first date
                 }
             }
+            xmlw.writeEndElement(); //mdb:dateInfo
         }
+//        if (dateOfDepositF != null) {
+//            String date = ((PrimitiveField) dateOfDepositF).getSingleValue();
+//            if (date != null && !date.isEmpty()) {
+//                dateISO(xmlw, date, "released");
+//            }
+//        }
+
     }
+
 
     private static void dateISO(XMLStreamWriter xmlw, String date, String code) throws XMLStreamException {
         logger.info("dateISO");
@@ -552,7 +834,7 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //cit:date
         xmlw.writeStartElement("cit:dateType");
         xmlw.writeStartElement("cit:CI_DateTypeCode");
-        xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_DateTypeCode");
+        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_DateTypeCode");
         xmlw.writeAttribute("codeListValue", code);
         xmlw.writeCharacters(code);
         xmlw.writeEndElement(); //cit:CI_DateTypeCode
@@ -560,6 +842,102 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //cit:CI_Date
         logger.info("dateISO end");
 
+    }
+
+    private static String determineOtherIdDescription(String otherIdAgency) {
+        if (otherIdAgency != null && !otherIdAgency.isEmpty()) {
+            if (otherIdAgency.equals("ScholarsPortal-Old")) {
+                return "GeoPortal Old Naming Conventions";
+            }
+            if (otherIdAgency.equals("ScholarsPortal")) {
+                return "GeoPortal Naming Conventions [2025]";
+            }
+            if (otherIdAgency.equals("ScholarsPortal-FileID")) {
+                return "The filename of the dataset's metadata record before the migration";
+            }
+        }
+
+        return "Alternative metadata reference";
+    }
+
+    private static void writeAlternativeMetadataReferenceForDataset(XMLStreamWriter xmlw) throws XMLStreamException {
+
+        xmlw.writeStartElement("mdb:alternativeMetadataReference");
+        xmlw.writeStartElement("cit:CI_Citation");
+        xmlw.writeStartElement("cit:title");
+        xmlw.writeStartElement("gco:CharacterString");
+        xmlw.writeCharacters("Alternative metadata reference 1: The GeoPortal landing page");
+        xmlw.writeEndElement(); //gco:CharacterString
+        xmlw.writeEndElement(); //cit:title
+        xmlw.writeStartElement("cit:identifier");
+        xmlw.writeStartElement("mcc:MD_Identifier");
+        xmlw.writeStartElement("mcc:code");
+        xmlw.writeStartElement("gco:CharacterString");
+        xmlw.writeCharacters("[thisDataset]");
+        xmlw.writeEndElement(); //gco:CharacterString
+        xmlw.writeEndElement(); //mcc:code
+        xmlw.writeStartElement("mcc:codeSpace");
+        xmlw.writeStartElement("gco:CharacterString");
+        xmlw.writeCharacters("GeoPortal Archived Metadata Record");
+        xmlw.writeEndElement(); //gco:CharacterString
+        xmlw.writeEndElement(); //mcc:codeSpace
+        xmlw.writeStartElement("mcc:description");
+        xmlw.writeStartElement("gco:CharacterString");
+        xmlw.writeCharacters("Name of GeoPortal metadata landing page on site");
+        xmlw.writeEndElement(); //gco:CharacterString
+        xmlw.writeEndElement(); //mcc:description
+        xmlw.writeEndElement(); //mcc:MD_Identifier
+        xmlw.writeEndElement(); //cit:identifier
+        writeOnlineResource(xmlw, "https://geo.scholarsportal.info/thisDataset.html", "https", "Linkage for GeoPortal landing page for this dataset", null, true);
+        xmlw.writeEndElement(); //cit:CI_Citation
+        xmlw.writeEndElement(); //mdb:alternativeMetadataReference
+    }
+
+    private static void writeOnlineResource(XMLStreamWriter xmlw, String linkage, String protocol, String description, String name, boolean function) throws XMLStreamException {
+        xmlw.writeStartElement("cit:onlineResource");
+        xmlw.writeStartElement("cit:CI_OnlineResource");
+//        if (name != null && !name.isEmpty()) {
+//            xmlw.writeStartElement("cit:name");
+//            xmlw.writeStartElement("gco:CharacterString");
+//            xmlw.writeCharacters(name);
+//            xmlw.writeEndElement(); //gco:CharacterString
+//            xmlw.writeEndElement(); //cit:name
+//        }
+        xmlw.writeStartElement("cit:linkage");
+        xmlw.writeStartElement("gco:CharacterString");
+        xmlw.writeCharacters(linkage);
+        xmlw.writeEndElement(); //gco:CharacterString
+        xmlw.writeEndElement(); //cit:linkage
+        xmlw.writeStartElement("cit:protocol");
+        xmlw.writeStartElement("gco:CharacterString");
+        xmlw.writeCharacters(protocol);
+        xmlw.writeEndElement(); //gco:CharacterString
+        xmlw.writeEndElement(); //cit:protocol
+        if (name != null && !name.isEmpty()) {
+            xmlw.writeStartElement("cit:name");
+            xmlw.writeStartElement("gco:CharacterString");
+            xmlw.writeCharacters(name);
+            xmlw.writeEndElement(); //gco:CharacterString
+            xmlw.writeEndElement(); //cit:name
+        }
+        if (description != null && !description.isEmpty()) {
+            xmlw.writeStartElement("cit:description");
+            xmlw.writeStartElement("gco:CharacterString");
+            xmlw.writeCharacters(description);
+            xmlw.writeEndElement(); //gco:CharacterString
+            xmlw.writeEndElement(); //cit:description
+        }
+        if (function) {
+            xmlw.writeStartElement("cit:function");
+            xmlw.writeStartElement("cit:CI_OnLineFunctionCode");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_OnLineFunctionCode");
+            xmlw.writeAttribute("codeListValue", "download");
+            xmlw.writeCharacters("documentDigital");
+            xmlw.writeEndElement(); //cit:CI_OnLineFunctionCode
+            xmlw.writeEndElement(); //cit:function
+        }
+        xmlw.writeEndElement(); //cit:CI_OnlineResource
+        xmlw.writeEndElement(); //cit:onlineResource
     }
 
     private static void writeAlternativeMetadataReference(XMLStreamWriter xmlw, Field otherIdF) throws XMLStreamException {
@@ -575,17 +953,17 @@ public class ISO19115_3ExportUtil {
                 if (otherIdAgencyF != null) {
                     otherIdAgency = ((PrimitiveField) otherIdAgencyF).getSingleValue();
                 }
+                String description = determineOtherIdDescription(otherIdAgency);
 
                 if (otherId != null && !otherId.isEmpty()) {
                     xmlw.writeStartElement("mdb:alternativeMetadataReference");
                     xmlw.writeStartElement("cit:CI_Citation");
-                    //mcc:codeSpace/gco:CharacterString
-//                    xmlw.writeStartElement("cit:title");
-//                    xmlw.writeAttribute("xsi:type", "lan:PT_FreeText_PropertyType");
-//                    xmlw.writeStartElement("gco:CharacterString");
-//                    xmlw.writeCharacters(otherIdAgency);
-//                    xmlw.writeEndElement(); //gco:CharacterString
-//                    xmlw.writeEndElement(); //cit:title
+                    xmlw.writeStartElement("cit:title");
+                    //xmlw.writeAttribute("xsi:type", "lan:PT_FreeText_PropertyType");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters(otherIdAgency);
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //cit:title
                     xmlw.writeStartElement("cit:identifier");
                     xmlw.writeStartElement("mcc:MD_Identifier");
                     xmlw.writeStartElement("mcc:code");
@@ -598,15 +976,22 @@ public class ISO19115_3ExportUtil {
                     xmlw.writeCharacters(otherIdAgency);
                     xmlw.writeEndElement(); //gco:CharacterString
                     xmlw.writeEndElement(); //mcc:codeSpace
+                    xmlw.writeStartElement("mcc:description");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters(description);
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //mcc:description
                     xmlw.writeEndElement(); //mcc:MD_Identifier
                     xmlw.writeEndElement(); //cit:identifier
-                    xmlw.writeStartElement("cit:presentationForm");
-                    xmlw.writeStartElement("cit:CI_PresentationFormCode");
-                    xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
-                    xmlw.writeAttribute("codeListValue", "documentDigital");
-                    xmlw.writeCharacters("documentDigital");
-                    xmlw.writeEndElement(); //cit:CI_PresentationFormCode
-                    xmlw.writeEndElement(); //cit:presentationForm
+
+
+//                    xmlw.writeStartElement("cit:presentationForm");
+//                    xmlw.writeStartElement("cit:CI_PresentationFormCode");
+//                    xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
+//                    xmlw.writeAttribute("codeListValue", "documentDigital");
+//                    xmlw.writeCharacters("documentDigital");
+                    //xmlw.writeEndElement(); //cit:CI_PresentationFormCode
+                    //xmlw.writeEndElement(); //cit:presentationForm
                     xmlw.writeEndElement(); //cit:CI_Citation
                     xmlw.writeEndElement(); //mdb:alternativeMetadataReference
                 }
@@ -614,45 +999,96 @@ public class ISO19115_3ExportUtil {
         }
     }
 
-    private static void writeSpatialRepresentationInfo(XMLStreamWriter xmlw, Field geometricObjectCountF, Field geometricObjectTypeCodeF) throws XMLStreamException {
+    private static void writeSpatialRepresentationInfo(XMLStreamWriter xmlw, Field geometricObjectCountF,
+                                                       Field geometricObjectTypeF, Field numberOfDimensionsF,
+                                                       Field axisDimensionPropertyF, Field cellGeometryF) throws XMLStreamException {
         String geometricObjectCount = "";
         if (geometricObjectCountF != null) {
             geometricObjectCount = ((PrimitiveField) geometricObjectCountF).getSingleValue();
         }
-        String geometricObjectTypeCode = "";
-        if (geometricObjectTypeCodeF!=null) {
-            geometricObjectTypeCode = ((ControlledVocabularyField) geometricObjectTypeCodeF).getSingleValue();
+        String geometricObjectType = "";
+        if (geometricObjectTypeF != null) {
+            geometricObjectType = ((ControlledVocabularyField) geometricObjectTypeF).getSingleValue();
         }
 
+        String numberOfDimensions = "";
+        if (numberOfDimensionsF != null) {
+            numberOfDimensions = ((PrimitiveField) numberOfDimensionsF).getSingleValue();
+        }
+
+        String cellGeometry = "";
+        if (cellGeometryF != null) {
+            cellGeometry = ((ControlledVocabularyField) cellGeometryF).getSingleValue();
+        }
+
+        //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_GridSpatialRepresentation/msr:axisDimensionProperties/msr:numberOfDimensions/msr:MD_CellGeometryCode
+
+
         if ((geometricObjectCount != null && !geometricObjectCount.isEmpty()) ||
-                (geometricObjectTypeCode != null && !geometricObjectTypeCode.isEmpty())) {
+                (numberOfDimensions != null && !numberOfDimensions.isEmpty()) ||
+                (geometricObjectType != null && !geometricObjectType.isEmpty()) || (cellGeometry != null && !cellGeometry.isEmpty())) {
+
             xmlw.writeStartElement("mdb:spatialRepresentationInfo");
-            //xmlw.writeStartElement("msr:MD_SpatialRepresentation");
-            xmlw.writeStartElement("msr:MD_VectorSpatialRepresentation");
-            xmlw.writeStartElement("msr:geometricObjects");
-            xmlw.writeStartElement("msr:MD_GeometricObjects");
+            if ((numberOfDimensions != null && !numberOfDimensions.isEmpty()) || (cellGeometry != null && !cellGeometry.isEmpty())) {
+                xmlw.writeStartElement("msr:MD_GridSpatialRepresentation");
 
-            if (geometricObjectTypeCode != null && !geometricObjectTypeCode.isEmpty()) {
-                xmlw.writeStartElement("msr:geometricObjectType");
-                xmlw.writeStartElement("msr:MD_GeometricObjectTypeCode");
-                xmlw.writeAttribute("codeSpace","ISOTC211/19115");
-                xmlw.writeAttribute("codeList","http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_GeometricObjectTypeCode");
-                xmlw.writeAttribute("codeListValue",geometricObjectTypeCode);
-                xmlw.writeCharacters(geometricObjectTypeCode);
-                xmlw.writeEndElement(); //msr:MD_GeometricObjectTypeCode
-                xmlw.writeEndElement(); //msr:geometricObjectType
+                if (cellGeometry != null && !cellGeometry.isEmpty()) {
+
+                    xmlw.writeStartElement("msr:axisDimensionProperties");
+                    xmlw.writeStartElement("msr:MD_CellGeometryCode");
+                    xmlw.writeAttribute("codeList", "http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_CellGeometryCode");
+                    xmlw.writeAttribute("codeListValue", cellGeometry);
+                    xmlw.writeCharacters(cellGeometry);
+                    xmlw.writeEndElement(); //msr:MD_CellGeometryCode
+                    xmlw.writeEndElement(); //msr:axisDimensionProperties
+                    xmlw.writeEndElement(); //msr:MD_GridSpatialRepresentation
+                }
+                //xmlw.writeStartElement("msr:MD_SpatialRepresentation");
+
+                if (numberOfDimensions != null && !numberOfDimensions.isEmpty()) {
+
+                    xmlw.writeStartElement("msr:numberOfDimensions");
+                    xmlw.writeStartElement("gco:Integer");
+                    xmlw.writeCharacters(numberOfDimensions);
+                    xmlw.writeEndElement(); //gco:Integer
+                    xmlw.writeEndElement(); //msr:numberOfDimensions
+
+                    //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_GridSpatialRepresentation/msr:numberOfDimensions/gco:Integer
+                }
+                xmlw.writeEndElement(); //msr:MD_GridSpatialRepresentation
             }
 
-            if (geometricObjectCount != null && !geometricObjectCount.isEmpty()) {
-                xmlw.writeStartElement("msr:geometricObjectCount");
-                xmlw.writeStartElement("gco:Integer");
-                xmlw.writeCharacters(geometricObjectCount);
-                xmlw.writeEndElement(); //gco:Integer
-                xmlw.writeEndElement(); //mrs:geometricObjectCount
+            if ((geometricObjectCount != null && !geometricObjectCount.isEmpty()) ||
+                    (geometricObjectType != null && !geometricObjectType.isEmpty())) {
+                //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_VectorSpatialRepresentation/geometricObjects/MD_GeometricObjects/
+                //xmlw.writeStartElement("msr:MD_SpatialRepresentation");
+                xmlw.writeStartElement("msr:MD_VectorSpatialRepresentation");
+                xmlw.writeStartElement("msr:geometricObjects");
+                xmlw.writeStartElement("msr:MD_GeometricObjects");
+
+                if (geometricObjectType != null && !geometricObjectType.isEmpty()) {
+                    xmlw.writeStartElement("msr:geometricObjectType");
+                    xmlw.writeStartElement("msr:MD_GeometricObjectTypeCode");
+                    xmlw.writeAttribute("codeSpace", "ISOTC211/19115");
+                    xmlw.writeAttribute("codeList", "http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_GeometricObjectTypeCode");
+                    xmlw.writeAttribute("codeListValue", geometricObjectType);
+                    xmlw.writeCharacters(geometricObjectType);
+                    xmlw.writeEndElement(); //msr:MD_GeometricObjectTypeCode
+                    xmlw.writeEndElement(); //msr:geometricObjectType
+                }
+
+                if (geometricObjectCount != null && !geometricObjectCount.isEmpty()) {
+                    xmlw.writeStartElement("msr:geometricObjectCount");
+                    xmlw.writeStartElement("gco:Integer");
+                    xmlw.writeCharacters(geometricObjectCount);
+                    xmlw.writeEndElement(); //gco:Integer
+                    xmlw.writeEndElement(); //mrs:geometricObjectCount
+                }
+                xmlw.writeEndElement(); //msr:MD_GeometricObjects
+                xmlw.writeEndElement(); //msr:geometricObjects
+                xmlw.writeEndElement(); //msr:MD_VectorSpatialRepresentation
+                //xmlw.writeEndElement(); //msr:MD_SpatialRepresentation
             }
-            xmlw.writeEndElement(); //msr:MD_GeometricObjects
-            xmlw.writeEndElement(); //msr:geometricObjects
-            xmlw.writeEndElement(); //msr:MD_VectorSpatialRepresentation
             //xmlw.writeEndElement(); //msr:MD_SpatialRepresentation
             xmlw.writeEndElement(); //mdb:spatialRepresentationInfo
         }
@@ -701,43 +1137,219 @@ public class ISO19115_3ExportUtil {
     }
 
     private static void writeIdentificationInfo(XMLStreamWriter xmlw, Field geographicBoundingBox, Field keyword, Field author,
-                                         Field title, Field alternativeTitle, Field distributionDate, Field geoReferenceDate,
-                                         Field topicClass, Field note, Field series, Field software,
-                                         Field spatialResolution, Field spatialRepresentationType, String termsOfuse,
-                                         Field datasetContact, Field description) throws XMLStreamException {
+                                                Field title, Field alternativeTitle, Field distributionDate, Field referenceDate,
+                                                Field topicClass, Field note, Field series, Field software,
+                                                Field spatialResolution, Field spatialRepresentationType, String termsOfuse,
+                                                Field datasetContact, Field description, Field publication,
+                                                Field producer, Field timePeriodCovered, Field otherReferences,
+                                                Field geographicCoverage, Field contributor, Field geographicUnit,
+                                                Field productionDate, String restrictions, String citationrequirements,
+                                                String depositorrequirements, String conditions, String disclaimer,
+                                                ArrayList dataverseFiles) throws XMLStreamException, UnknownHostException {
         xmlw.writeStartElement("mdb:identificationInfo");
         xmlw.writeStartElement("mri:MD_DataIdentification");
-        writeCitation(xmlw, author, title, alternativeTitle, distributionDate, geoReferenceDate, series);
 
+        writeCitation(xmlw, author, title, alternativeTitle, distributionDate, referenceDate, series,
+                producer, contributor, productionDate);
         writeAbstractAndPurpose(xmlw, description);
         writePointOfContact(xmlw, datasetContact);
         writeSpatialRepresentationType(xmlw, spatialRepresentationType);
-        writeSpatialResolution(xmlw,spatialResolution);
+        writeSpatialResolution(xmlw, spatialResolution);
         writeTopicClass(xmlw, topicClass);
-        writeExtent(xmlw, geographicBoundingBox);
-        writeDescritiveKeywords(xmlw, keyword);
-        writeResourceConstrains(xmlw, termsOfuse);
+        writeExtent(xmlw, geographicBoundingBox, timePeriodCovered, geographicCoverage);
+        writeAdditionalDocumentation(xmlw, otherReferences);
+        writeAdditionalDocumentationForDataverseFiles(xmlw, dataverseFiles);
+        writeDescritiveKeywords(xmlw, keyword, geographicCoverage, geographicUnit);
+        writeResourceConstrains(xmlw, termsOfuse, restrictions, citationrequirements, depositorrequirements, conditions, disclaimer);
+        writeAssociatedResource(xmlw, publication);
+
         writeSoftware(xmlw, software);
         writeNote(xmlw, note);
-        xmlw.writeEndElement();
-        xmlw.writeEndElement();
+
+        //mdb:MD_Metadata/mdb:identificationInfo/mri:MD_DataIdentification/mri:additionalDocumentation/cit:CI_Citation/cit:onlineResource/cit:CI_OnlineResource/cit:name/gco:CharacterString;
+        // mdb:MD_Metadata/mdb:identificationInfo/mri:MD_DataIdentification/mri:additionalDocumentation/cit:CI_Citation/cit:onlineResource/cit:CI_OnlineResource/cit:linkage/gco:CharacterString;
+        // mdb:MD_Metadata/mdb:identificationInfo/mri:MD_DataIdentification/mri:additionalDocumentation/cit:CI_Citation/cit:onlineResource/cit:CI_OnlineResource/cit:protocol/gco:CharacterString;
+        //Label+URL of the website
+
+        xmlw.writeEndElement(); //mri:MD_DataIdentification
+        xmlw.writeEndElement(); //mdb:identificationInfo
+        logger.info("writeIdentificationInfo");
+    }
+
+    private static void writeAdditionalDocumentationForDataverseFiles(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException, UnknownHostException {
+        if (dataverseFiles != null) {
+
+            String serverName = "https://dvdev.scholarsportal.info"; //default
+//            if (dataverseFiles.size() > 0) {
+//                InetAddress localHost = InetAddress.getLocalHost();
+//                serverName = localHost.getHostName();
+//                logger.info("Hostname: " + serverName);
+//            }
+
+
+            for (DataverseFiles file : dataverseFiles) {
+                if (file.getDirectoryLabel().equals("userguides")) {
+                    xmlw.writeStartElement("mri:additionalDocumentation");
+                    xmlw.writeStartElement("cit:CI_Citation");
+                    xmlw.writeStartElement("cit:title");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters(file.getLabel());
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //cit:title
+                    String url = serverName + "/api/access/datafile/" + Integer.toString(file.getDataFile().getId());
+                    writeOnlineResource(xmlw, url, "https", file.getDescription(), file.getDirectoryLabel(), false);
+                    xmlw.writeEndElement(); //cit:CI_Citation
+                    xmlw.writeEndElement(); //mri:additionalDocumentation
+                }
+
+            }
+        }
+
+    }
+
+    private static void writeAdditionalDocumentation(XMLStreamWriter xmlw, Field otherReferencesF) throws XMLStreamException {
+        logger.info("Writing additional documentation");
+        if (otherReferencesF != null) {
+            List<String> otherReferences = ((PrimitiveField) otherReferencesF).getMultipleValues();
+            for (String ref : otherReferences) {
+                if (ref != null && !ref.isEmpty()) {
+                    String[] parts = ref.split(";");
+                    xmlw.writeStartElement("mri:additionalDocumentation");
+                    xmlw.writeStartElement("cit:CI_Citation");
+                    xmlw.writeStartElement("cit:title");
+                    xmlw.writeEndElement(); // cit:title
+                    xmlw.writeStartElement("cit:onlineResource");
+                    xmlw.writeStartElement("cit:CI_OnlineResource");
+                    logger.info(" linkage field " + String.valueOf(parts.length));
+                    if (parts.length>1) {
+                        xmlw.writeStartElement("cit:linkage");
+                        xmlw.writeStartElement("gco:CharacterString");
+                        xmlw.writeCharacters(parts[1]);
+                        xmlw.writeEndElement(); //gco:CharacterString
+                        xmlw.writeEndElement(); //cit:linkage
+
+                        //protocol is not known
+                        xmlw.writeStartElement("cit:protocol");
+                        xmlw.writeStartElement("gco:CharacterString");
+                        xmlw.writeCharacters("https"); //hardcoded for now
+                        xmlw.writeEndElement(); //gco:CharacterString
+                        xmlw.writeEndElement(); //cit:protocol
+                    } else {
+                        xmlw.writeStartElement("cit:linkage");
+                        xmlw.writeEndElement(); //cit:linkage
+                        //protocol is not known
+                        xmlw.writeStartElement("cit:protocol");
+                        xmlw.writeEndElement(); //cit:protocol
+                    }
+                    xmlw.writeStartElement("cit:name");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters(parts[0]);
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //cit:name
+
+                    xmlw.writeEndElement(); //cit:CI_OnlineResource
+                    xmlw.writeEndElement(); //cit:onlineResource
+                    xmlw.writeEndElement(); //cit:CI_Citation
+                    xmlw.writeEndElement(); //mri:additionalDocumentation
+                }
+            }
+        }
+        logger.info("Writing additional documentation End");
+    }
+
+    private static void writeAssociatedResource(XMLStreamWriter xmlw, Field publicationF) throws XMLStreamException {
+        logger.info("Writing associated resource");
+        if (publicationF != null) {
+            for (HashMap<String, Field> foo : ((CompoundField) publicationF).getMultipleValues()) {
+                Field publicationRelationTypeF = foo.get("publicationRelationType");
+                Field publicationCitationF = foo.get("publicationCitation");
+                Field publicationURLF = foo.get("publicationURL");
+
+                writeSingleAssociatedResource(xmlw, publicationRelationTypeF, publicationCitationF, publicationURLF);
+            }
+        }
+        logger.info("Writing associated resource End");
+    }
+
+    private static void writeSingleAssociatedResource(XMLStreamWriter xmlw, Field publicationRelationTypeF, Field publicationCitationF, Field publicationURLF) throws XMLStreamException {
+        logger.info("Writing single associated resource");
+        String publicationRelationType = "";
+        String publicationCitation = "";
+        String publicationURL = "";
+        xmlw.writeStartElement("mri:associatedResource");
+        xmlw.writeStartElement("mri:MD_AssociatedResource");
+        if (publicationRelationTypeF != null) {
+            publicationRelationType = ((ControlledVocabularyField) publicationRelationTypeF).getSingleValue();
+        }
+        if (publicationCitationF != null) {
+            publicationCitation = ((PrimitiveField) publicationCitationF).getSingleValue();
+        }
+        if (publicationURLF != null) {
+            publicationURL = ((PrimitiveField) publicationURLF).getSingleValue();
+        }
+
+        if (!publicationCitation.isEmpty() || !publicationURL.isEmpty()) {
+
+            xmlw.writeStartElement("mri:name");
+            xmlw.writeStartElement("cit:CI_Citation");
+            if (!publicationCitation.isEmpty()) {
+                xmlw.writeStartElement("cit:title");
+                xmlw.writeStartElement("gco:CharacterString");
+                xmlw.writeCharacters(publicationCitation);
+                xmlw.writeEndElement(); //gco:CharacterString
+                xmlw.writeEndElement(); //cit:title
+            }
+            if (!publicationURL.isEmpty()) {
+                writeOnlineResource(xmlw, publicationURL, "https", null, null, false);
+            }
+            xmlw.writeEndElement(); //cit:CI_Citation
+            xmlw.writeEndElement(); //mri:name
+        }
+
+        if (!publicationRelationType.isEmpty()) {
+            xmlw.writeStartElement("mri:associationType");
+            xmlw.writeStartElement("mri:DS_AssociationTypeCode");
+
+            xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#DS_AssociationTypeCode");
+            xmlw.writeAttribute("codeListValue",publicationRelationType);
+
+//            xmlw.writeStartElement("gco:CharacterString");
+//            xmlw.writeCharacters(publicationRelationType);
+//            xmlw.writeEndElement(); //gco:CharacterString
+            xmlw.writeEndElement(); //mri:DS_AssociationTypeCode
+            xmlw.writeEndElement(); //mri:associationType
+        }
+
+        xmlw.writeEndElement(); //mri:associatedResource
+        xmlw.writeEndElement(); //mri:MD_AssociatedResource
+        logger.info("Writing single associated resource End");
     }
 
     private static void writeCitation(XMLStreamWriter xmlw, Field authorF,Field titleF,
                                Field alternativeTitleF, Field distributionDateF,
-                               Field geoReferenceDateF, Field series ) throws XMLStreamException {
+                               Field referenceDateF, Field series, Field producerF, Field contributorF,
+                                      Field productionDateF) throws XMLStreamException {
+
         xmlw.writeStartElement("mri:citation");
         xmlw.writeStartElement("cit:CI_Citation");
         title(xmlw, titleF);
         alternativeTitle(xmlw, alternativeTitleF);
+
         if (distributionDateF != null) {
             String distributionDate = ((PrimitiveField) distributionDateF).getSingleValue();
             if (distributionDate != null && !distributionDate.isEmpty()) {
-                distributionDate(xmlw, distributionDate);
+                printDate(xmlw, distributionDate, "distribution");
             }
         }
-        if (geoReferenceDateF != null) {
-            geoReferenceDate(xmlw, geoReferenceDateF);
+        if (referenceDateF != null) {
+            referenceDate(xmlw, referenceDateF);
+        }
+
+        if (productionDateF != null) {
+            String productionDate = ((PrimitiveField) productionDateF).getSingleValue();
+            if (productionDate != null && !productionDate.isEmpty()) {
+                printDate(xmlw, productionDate, "creation");
+            }
         }
 
         for (HashMap<String, Field> foo : ((CompoundField) authorF).getMultipleValues()) {
@@ -757,13 +1369,123 @@ public class ISO19115_3ExportUtil {
                 //responsibleParty(xmlw, authorName, "originator");
             }
         }
+        if (producerF != null) {
+            writeProducer(xmlw, producerF, "producerName", "producerAffiliation", "publisher");
+        }
 
+        if (contributorF != null) {
+            writeContributor(xmlw, contributorF);
+        }
 
         if (series != null) {
             writeSeries(xmlw, series);
         }
+
+
+
+
+
+
+
+
+
         xmlw.writeEndElement(); //cit:CI_Citation
         xmlw.writeEndElement(); //mri:citation
+        logger.info("Writing citation End");
+    }
+
+
+
+    private static String getContributorRole(String contributorType) {
+        if (contributorType != null && !contributorType.isEmpty()) {
+            switch (contributorType) {
+                case "Hosting Institution":
+                    return "resourceProvider";
+                case "Other":
+                    return "collaborator";
+                case "Rights Holder":
+                    return "rightsHolder";
+                case "Researcher":
+                    return "principalInvestigator"; //"collaborator"?
+                case "Data Curator":
+                    return "processor"; //"collaborator"?
+                case "Funder":
+                    return "funder";
+                case "Editor":
+                    return "editor";
+                case "Research Group":
+                    return "publisher";
+                case "Project Member":
+                    return "collaborator";
+                case "Sponsor":
+                    return "sponsor";
+                case "Data Collector":
+                    return "collaborator";
+                case "Data Manager":
+                    return "collaborator";
+                case "Work Package Leader":
+                    return "collaborator";
+                case "Supervisor":
+                    return "collaborator";
+                case "Related Person":
+                    return "collaborator";
+                case "Project Manager":
+                    return "collaborator";
+                case "Project Leader":
+                    return "collaborator";
+                default:
+                    return "";
+
+            }
+        }
+        return "";
+    }
+
+    private static void writeContributor(XMLStreamWriter xmlw, Field contributorF) throws XMLStreamException {
+
+        String role = "";
+        for (HashMap<String, Field> foo : ((CompoundField) contributorF).getMultipleValues()) {
+            Field contributorTypeF = foo.get("contributorType");
+            Field contributorNameF = foo.get("contributorName");
+            String contributorType = "";
+            String contributorName = "";
+
+            if (contributorTypeF != null) {
+                contributorType = ((ControlledVocabularyField) contributorTypeF).getSingleValue();
+                role = getContributorRole(contributorType);
+            }
+            if (contributorNameF != null) {
+                contributorName = ((PrimitiveField) contributorNameF).getSingleValue();
+            }
+            if ((contributorName != null && !contributorName.isEmpty()) ||
+                    (role != null && !role.isEmpty())) {
+                responsibleParty(xmlw, null, role, contributorName);
+            }
+        }
+
+    }
+
+
+
+    private static void writeProducer(XMLStreamWriter xmlw, Field producerF, String producerNameStr, String producerAffiliationStr, String role) throws XMLStreamException {
+        logger.info("Writing producer ");
+        for (HashMap<String, Field> foo : ((CompoundField) producerF).getMultipleValues()) {
+            Field producerNameF = foo.get(producerNameStr);
+            Field producerAffiliationF = foo.get(producerAffiliationStr);
+            String producerName = "";
+            String producerAffiliation = "";
+            if (producerNameF != null) {
+                producerName = ((PrimitiveField) producerNameF).getSingleValue();
+            }
+            if (producerAffiliationF != null) {
+                producerAffiliation = ((PrimitiveField) producerAffiliationF).getSingleValue();
+            }
+            if ((producerAffiliation != null && !producerAffiliation.isEmpty() ||
+                    (producerName != null && !producerName.isEmpty()))) {
+                responsibleParty(xmlw, producerName, role, producerAffiliation);
+            }
+        }
+        logger.info("Writing producer End");
     }
 
     private static void title(XMLStreamWriter xmlw, Field titleF) throws XMLStreamException {
@@ -787,36 +1509,37 @@ public class ISO19115_3ExportUtil {
         }
     }
 
-    private static void distributionDate(XMLStreamWriter xmlw, String distributionDate) throws XMLStreamException {
+    private static void printDate(XMLStreamWriter xmlw, String distributionDate, String code) throws XMLStreamException {
         xmlw.writeStartElement("cit:date");
-        dateISO(xmlw, distributionDate, "distribution");
+        dateISO(xmlw, distributionDate, code);
         xmlw.writeEndElement();//cit:date
     }
 
-    private static void geoReferenceDate(XMLStreamWriter xmlw, Field geoReferenceDateF) throws XMLStreamException {
-        for (HashMap<String, Field> foo : ((CompoundField) geoReferenceDateF).getMultipleValues()) {
-            String geoReferenceDateType = "";
-            String geoReferenceDateValue = "";
+    private static void referenceDate(XMLStreamWriter xmlw, Field referenceDateF) throws XMLStreamException {
+        for (HashMap<String, Field> foo : ((CompoundField) referenceDateF).getMultipleValues()) {
+            String referenceDateType = "";
+            String referenceDateValue = "";
 
-            Field geoReferenceDateTypeF = foo.get("geoReferenceDateType");
-            Field geoReferenceDateValueF = foo.get("geoReferenceDateValue");
-            if (geoReferenceDateTypeF != null) {
-                geoReferenceDateType = ((ControlledVocabularyField) geoReferenceDateTypeF).getSingleValue();
+            Field referenceDateTypeF = foo.get("referenceDateType");
+            Field referenceDateValueF = foo.get("referenceDateValue");
+            if (referenceDateTypeF != null) {
+                referenceDateType = ((ControlledVocabularyField) referenceDateTypeF).getSingleValue();
             }
-            if (geoReferenceDateValueF != null) {
-                geoReferenceDateValue = ((PrimitiveField) geoReferenceDateValueF).getSingleValue();
+            if (referenceDateValueF != null) {
+                referenceDateValue = ((PrimitiveField) referenceDateValueF).getSingleValue();
             }
 
 
-            if (geoReferenceDateValue != null && !geoReferenceDateValue.isEmpty()) {
+            if (referenceDateValue != null && !referenceDateValue.isEmpty()) {
                 xmlw.writeStartElement("cit:date");
-                dateISO(xmlw, geoReferenceDateValue, geoReferenceDateType);
+                dateISO(xmlw, referenceDateValue, referenceDateType);
                 xmlw.writeEndElement();//cit:date
             }
         }
     }
 
     private static void responsibleParty(XMLStreamWriter xmlw, String name, String role, String affiliation) throws XMLStreamException {
+
         xmlw.writeStartElement("cit:citedResponsibleParty");
         xmlw.writeStartElement("cit:CI_Responsibility");
         xmlw.writeStartElement("cit:role");
@@ -851,30 +1574,59 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //cit:party
         xmlw.writeEndElement(); //cit:CI_Responsibility
         xmlw.writeEndElement(); //cit:citedResponsibleParty
+        logger.info("Writing responsibleParty End");
     }
 
     private static void writeSeries(XMLStreamWriter xmlw, Field seriesF) throws XMLStreamException {
-        for (HashMap<String, Field> foo : ((CompoundField) seriesF).getMultipleValues()) {
+        logger.info("Writing series");
+        String totalSeries = "";
+        int i = 1;
+        List<HashMap<String, Field>> fields =  ((CompoundField) seriesF).getMultipleValues();
+        for (HashMap<String, Field> foo : fields) {
+            logger.info("Writing series " + i + " of " + fields.size());
             String seriesName = "";
             Field seriesNameF = foo.get("seriesName");
 
             if (seriesNameF != null) {
+                logger.info("SeriesNameF");
                 seriesName = ((PrimitiveField) seriesNameF).getSingleValue();
             }
 
+//              <cit:presentationForm>
+//                    <cit:CI_PresentationFormCode codeList="http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode" codeListValue="documentDigital">documentDigital</cit:CI_PresentationFormCode>
+//                    </cit:presentationForm>
+
+//            xmlw.writeStartElement("cit:presentationForm");
+//            xmlw.writeStartElement("cit:CI_PresentationFormCode");
+//            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
+//            xmlw.writeAttribute("codeListValue", "documentDigital");
+//            xmlw.writeCharacters("documentDigital");
+//            xmlw.writeEndElement(); //cit:CI_PresentationFormCode
+//            xmlw.writeEndElement(); //cit:presentationForm
+
+
+
             if (seriesName != null && !seriesName.isEmpty()) {
-                xmlw.writeStartElement("cit:series");
-                xmlw.writeStartElement("cit:CI_Series");
-                xmlw.writeStartElement("cit:name");
-                xmlw.writeStartElement("gco:CharacterString");
-                xmlw.writeCharacters(seriesName);
-                xmlw.writeEndElement(); //gco:CharacterString
-                xmlw.writeEndElement(); //cit:name
-                xmlw.writeEndElement(); //cit:CI_Series
-                xmlw.writeEndElement(); //cit:series
+                logger.info("Size of series " + Integer.toString(foo.size()));
+                if (i < fields.size()) {
+                    seriesName += ";";
+                }
             }
+            i++;
+            totalSeries += seriesName;
         }
-        //cit:series/cit:CI_Series/cit:name/gco:CharacterString
+        if (totalSeries != null || !totalSeries.isEmpty()) {
+            xmlw.writeStartElement("cit:series");
+            xmlw.writeStartElement("cit:CI_Series");
+            xmlw.writeStartElement("cit:name");
+            xmlw.writeStartElement("gco:CharacterString");
+            xmlw.writeCharacters(totalSeries);
+            xmlw.writeEndElement(); //gco:CharacterString
+            xmlw.writeEndElement(); //cit:name
+            xmlw.writeEndElement(); //cit:CI_Series
+            xmlw.writeEndElement(); //cit:series
+            //cit:series/cit:CI_Series/cit:name/gco:CharacterString
+        }
     }
 
     private static void writeAbstractAndPurpose(XMLStreamWriter xmlw, Field descriptionF) throws XMLStreamException {
@@ -900,6 +1652,9 @@ public class ISO19115_3ExportUtil {
                 xmlw.writeCharacters(description);
                 xmlw.writeEndElement(); //gco:CharacterString
                 xmlw.writeEndElement(); //mri:purpose
+                break; //only first description
+                //Only one description is allowed in ISO19115-3
+                //If multiple descriptions are found only the first one is written
                 //mri:abstract/gco:CharacterString
                 //mri:purpose/gco:CharacterString
             }
@@ -929,6 +1684,12 @@ public class ISO19115_3ExportUtil {
             xmlw.writeStartElement("mri:pointOfContact");
             xmlw.writeStartElement("cit:CI_Responsibility");
             xmlw.writeStartElement("cit:role");
+            // <cit:CI_RoleCode codeList="http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_RoleCode" codeListValue="pointOfContact">pointOfContact</cit:CI_RoleCode>
+            xmlw.writeStartElement("cit:CI_RoleCode");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_RoleCode");
+            xmlw.writeAttribute("codeListValue", "pointOfContact");
+            xmlw.writeCharacters("pointOfContact");
+            xmlw.writeEndElement(); //cit:CI_RoleCode
             xmlw.writeEndElement(); //cit:role
             xmlw.writeStartElement("cit:party");
             xmlw.writeStartElement("cit:CI_Organisation");
@@ -977,6 +1738,7 @@ public class ISO19115_3ExportUtil {
     }
 
     private static void writeSpatialRepresentationType(XMLStreamWriter xmlw, Field spatialRepresentationTypeF ) throws XMLStreamException {
+
         if (spatialRepresentationTypeF != null) {
             String spatialRepresentationType = ((ControlledVocabularyField) spatialRepresentationTypeF).getSingleValue();
             if (spatialRepresentationType != null && !spatialRepresentationType.isEmpty()) {
@@ -1009,9 +1771,10 @@ public class ISO19115_3ExportUtil {
                 }
 
                 if (spatialResolutionValue != null && !spatialResolutionValue.isEmpty()) {
-                    xmlw.writeStartElement("mri:spatialResolution");
-                    xmlw.writeStartElement("mri:MD_Resolution");
+
                     if (spatialResolutionType.equals("equivalentScale")) {
+                        xmlw.writeStartElement("mri:spatialResolution");
+                        xmlw.writeStartElement("mri:MD_Resolution");
                         xmlw.writeStartElement("mri:equivalentScale");
                         xmlw.writeStartElement("mri:MD_RepresentativeFraction");
                         xmlw.writeStartElement("mri:denominator");
@@ -1021,10 +1784,11 @@ public class ISO19115_3ExportUtil {
                         xmlw.writeEndElement(); //mri:denominator
                         xmlw.writeEndElement(); //mri:MD_RepresentativeFraction
                         xmlw.writeEndElement(); //mri:equivalentScale
-
+                        xmlw.writeEndElement(); //mri:MD_Resolution
+                        xmlw.writeEndElement(); //mri:spatialResolution
+                        break;  //only equivalent scale is supported for now
                     }
-                    xmlw.writeEndElement(); //mri:MD_Resolution
-                    xmlw.writeEndElement(); //mri:spatialResolution
+
                 }
 
             }
@@ -1059,6 +1823,7 @@ public class ISO19115_3ExportUtil {
                 if (topicClassificationValue != null &&  !topicClassificationValue.isEmpty()) {
                     xmlw.writeStartElement("mri:topicCategory");
                     xmlw.writeStartElement("mri:MD_TopicCategoryCode");
+                    logger.info("Topic classification: " + topicClassificationValue);
                     xmlw.writeCharacters(topicClassificationValue);
                     xmlw.writeEndElement(); //mri:MD_TopicCategoryCode
                     xmlw.writeEndElement(); //mri:topicCategory
@@ -1067,10 +1832,37 @@ public class ISO19115_3ExportUtil {
         }
     }
 
-    private static void writeExtent(XMLStreamWriter xmlw, Field geographicBoundingBoxF) throws XMLStreamException {
+    private static void writeExtent(XMLStreamWriter xmlw, Field geographicBoundingBoxF, Field timePeriodCoveredF,
+                                    Field geographicCoverageF) throws XMLStreamException {
+        logger.info("writeExtent");
         /* Only 1 geoBndBox is
            So, I'm just going to arbitrarily use the first one, and ignore the rest! */
+
+
+        if (geographicCoverageF != null) {
+            HashMap<String, Field> foo = ((CompoundField) geographicCoverageF).getMultipleValues().get(0); //for now
+            Field otherGeographicCoverageF = foo.get("otherGeographicCoverage");
+            if (otherGeographicCoverageF != null) {
+                //cit:description/gco:CharacterString
+                String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
+                if (otherGeographicCoverage != null && !otherGeographicCoverage.isEmpty()) {
+
+                    xmlw.writeStartElement("mri:extent");
+                    xmlw.writeStartElement("gex:EX_Extent");
+                    xmlw.writeStartElement("gex:description");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters(otherGeographicCoverage);
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //gex:description
+                    xmlw.writeEndElement(); //gex:EX_Extent
+                    xmlw.writeEndElement(); //mri:extent
+                }
+            }
+        }
+
         if (geographicBoundingBoxF != null) {
+            xmlw.writeStartElement("mri:extent");
+            xmlw.writeStartElement("gex:EX_Extent");
             HashMap<String, Field> bndBoxMap = ((CompoundField) geographicBoundingBoxF).getMultipleValues().get(0);
             Field westLongitudeF = bndBoxMap.get("westLongitude");
             Field eastLongitudeF = bndBoxMap.get("eastLongitude");
@@ -1094,8 +1886,7 @@ public class ISO19115_3ExportUtil {
                 southLatitudeValue = ((PrimitiveField) southLatitudeF).getSingleValue();
             }
 
-            xmlw.writeStartElement("mri:extent");
-            xmlw.writeStartElement("gex:EX_Extent");
+
             xmlw.writeStartElement("gex:geographicElement");
             xmlw.writeStartElement("gex:EX_GeographicBoundingBox");
 
@@ -1129,10 +1920,63 @@ public class ISO19115_3ExportUtil {
             xmlw.writeEndElement(); //gex:geographicElement
             xmlw.writeEndElement(); //gex:EX_Extent
             xmlw.writeEndElement(); //mri:extent
+
         }
+        if (timePeriodCoveredF != null) {
+            writeTimePeriod(xmlw, timePeriodCoveredF );
+        }
+
+
+        logger.info("writeExtent End");
     }
 
-    private static void writeDescritiveKeywords(XMLStreamWriter xmlw, Field keywordsF) throws XMLStreamException {
+
+
+    private static void writeTimePeriod(XMLStreamWriter xmlw, Field timePeriodCoveredF) throws XMLStreamException {
+        logger.info("writeTimePeriod");
+        HashMap<String, Field> timePeriodCovered = ((CompoundField) timePeriodCoveredF).getMultipleValues().get(0);
+        Field timePeriodCoveredStartF = timePeriodCovered.get("timePeriodCoveredStart");
+        Field timePeriodCoveredEndF = timePeriodCovered.get("timePeriodCoveredEnd");
+        String timePeriodCoveredStart = "";
+        String timePeriodCoveredEnd = "";
+
+        if (timePeriodCoveredStartF != null) {
+            timePeriodCoveredStart = ((PrimitiveField) timePeriodCoveredStartF).getSingleValue();
+        }
+        if (timePeriodCoveredEndF != null) {
+            timePeriodCoveredEnd = ((PrimitiveField) timePeriodCoveredEndF).getSingleValue();
+        }
+
+        //gex:temporalElement/gex:EX_TemporalExtent/gex:extent/gml:TimePeriod/gml:beginPosition
+        if (!timePeriodCoveredStart.isEmpty() || !timePeriodCoveredEnd.isEmpty()) {
+            xmlw.writeStartElement("mri:extent");
+            xmlw.writeStartElement("gex:EX_Extent");
+            xmlw.writeStartElement("gex:temporalElement");
+            xmlw.writeStartElement("gex:EX_TemporalExtent");
+            xmlw.writeStartElement("gex:extent");
+            xmlw.writeStartElement("gml:TimePeriod");
+            if (timePeriodCoveredStart != null && !timePeriodCoveredStart.isEmpty()) {
+                xmlw.writeStartElement("gml:beginPosition");
+                xmlw.writeCharacters(timePeriodCoveredStart);
+                xmlw.writeEndElement(); //gml:beginPosition
+            }
+            if (timePeriodCoveredEnd != null && !timePeriodCoveredEnd.isEmpty()) {
+                xmlw.writeStartElement("gml:endPosition");
+                xmlw.writeCharacters(timePeriodCoveredEnd);
+                xmlw.writeEndElement(); //gml:endPosition
+            }
+            xmlw.writeEndElement(); //gml:TimePeriod
+            xmlw.writeEndElement(); //gex:extent
+            xmlw.writeEndElement(); //gex:EX_TemporalExtent
+            xmlw.writeEndElement(); //gex:temporalElement
+            xmlw.writeEndElement(); //gex:EX_Extent
+            xmlw.writeEndElement(); //mri:extent
+        }
+        logger.info("writeTimePeriod End");
+
+    }
+    private static HashMap<String, List<String>> prepareKeywords(Field keywordsF) {
+        HashMap<String, List<String>> mapTypeField = new HashMap<>();;
         if (keywordsF != null) {
             for (HashMap<String, Field> foo : ((CompoundField) keywordsF).getMultipleValues()) {
                 String keywordValue = "";
@@ -1147,67 +1991,201 @@ public class ISO19115_3ExportUtil {
                 }
                 if (keywordVocabF != null) {
                     keywordVocab = ((PrimitiveField) keywordVocabF).getSingleValue();
-                }
-                if (keywordURIF != null) {
-                    keywordURI = ((PrimitiveField) keywordURIF).getSingleValue();
+                    if (!mapTypeField.containsKey(keywordVocab)) {
+                        List<String> keywordList = new ArrayList<>();
+                        keywordList.add(keywordValue);
+                        mapTypeField.put(keywordVocab, keywordList);
+                    } else {
+                        List<String> keywordList = mapTypeField.get(keywordVocab);
+                        keywordList.add(keywordValue);
+                        mapTypeField.put(keywordVocab, keywordList);
+                    }
                 }
 
+            }
 
+        }
+        return mapTypeField;
+
+    }
+
+    private static String findKeywordType(String thesaurusName) {
+        String type = null;
+        switch (thesaurusName) {
+            case "Government of Canada Core Subject Thesaurus":
+                type = "theme";
+                break;
+            case "Global Change Master Directory (GCMD) Location Keywords":
+                type = "location";
+                break;
+            case "Ontario Ministry of Natural Resources (OMNR) Thesaurus":
+                type = "theme";
+                break;
+            case "free keywords":
+                type = "free keywords";
+                break;
+            case "dataverseLocation":
+                type = "location";
+                break;
+            case "dataverseGeographicUnit":
+                type = "featureType";
+                break;
+            default:
+                type = "free keywords";
+        }
+        return type;
+    }
+
+    private static HashMap<String, List<String>>  addKeywordToMap(HashMap<String, List<String>> mapTypeField,
+                                                                  String keyword, String keywordType) {
+        if (keyword != null && !keyword.isEmpty()) {
+
+            if (!mapTypeField.containsKey(keywordType)) {
+                List<String> keywordList = new ArrayList<>();
+                keywordList.add(keyword);
+                mapTypeField.put(keywordType, keywordList);
+            } else {
+                List<String> keywordList = mapTypeField.get(keywordType);
+                keywordList.add(keyword);
+                mapTypeField.put(keywordType, keywordList);
+            }
+        }
+        return mapTypeField;
+    }
+
+    private static HashMap<String, List<String>> addGeographicKeyword(HashMap<String, List<String>> mapTypeField,
+                                                          Field geographicCoverageF, Field geographicUnitF) {
+        if (geographicCoverageF != null) {
+            HashMap<String, Field> geoCov = ((CompoundField) geographicCoverageF).getMultipleValues().get(0);
+            Field countryF = geoCov.get("country");
+            String country = ((ControlledVocabularyField) countryF).getSingleValue();
+            addKeywordToMap(mapTypeField, country, "dataverseLocation");
+            Field stateF = geoCov.get("state");
+            String state = ((PrimitiveField) stateF).getSingleValue();
+            addKeywordToMap(mapTypeField, state, "dataverseLocation");
+            Field cityF = geoCov.get("city");
+            String city = ((PrimitiveField) cityF).getSingleValue();
+            addKeywordToMap(mapTypeField, city, "dataverseLocation");
+            Field otherGeographicCoverageF = geoCov.get("otherGeographicCoverage");
+            String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
+            addKeywordToMap(mapTypeField, otherGeographicCoverage, "dataverseLocation");
+
+        }
+        if (geographicUnitF != null) {
+            String geoUnit = ((PrimitiveField) geographicUnitF).getMultipleValues().get(0);
+            addKeywordToMap(mapTypeField, geoUnit, "dataverseGeographicUnit");
+        }
+
+        return mapTypeField;
+    }
+
+    private static void writeDescritiveKeywords(XMLStreamWriter xmlw, Field keywordsF,
+                                                Field geographicCoverageF, Field geographicUnitF) throws XMLStreamException {
+        HashMap<String, List<String>> mapTypeField = prepareKeywords(keywordsF);
+        mapTypeField = addGeographicKeyword(mapTypeField, geographicCoverageF, geographicUnitF);
+
+        for (String thesaurusName : mapTypeField.keySet()) {
+            xmlw.writeStartElement("mri:descriptiveKeywords");
+            xmlw.writeStartElement("mri:MD_Keywords");
+            for (String keywordValue : mapTypeField.get(thesaurusName)) {
                 if (keywordValue != null && !keywordValue.isEmpty()) {
-
-                    xmlw.writeStartElement("mri:descriptiveKeywords");
-                    xmlw.writeStartElement("mri:MD_Keywords");
                     xmlw.writeStartElement("mri:keyword");
                     xmlw.writeStartElement("gco:CharacterString");
                     xmlw.writeCharacters(keywordValue);
                     xmlw.writeEndElement(); //gco:CharacterString
                     xmlw.writeEndElement(); //mri:keyword
-                    xmlw.writeStartElement("mri:type");
-                    xmlw.writeStartElement("mri:MD_KeywordTypeCode");
-                    xmlw.writeAttribute("codeSpace", "ISOTC211/19115");
-                    xmlw.writeAttribute("codeList", "http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode");
-                    xmlw.writeAttribute("codeListValue", "theme");
-                    xmlw.writeCharacters("theme");
-                    xmlw.writeEndElement(); //mri:MD_KeywordTypeCode
-                    xmlw.writeEndElement(); //mri:type
-                    xmlw.writeStartElement("mri:thesaurusName");
-                    xmlw.writeStartElement("cit:CI_Citation");
-                    xmlw.writeStartElement("cit:title");
-                    xmlw.writeStartElement("gco:CharacterString");
-                    xmlw.writeCharacters(keywordVocab);
-                    xmlw.writeEndElement(); //gco:CharacterString
-                    xmlw.writeEndElement(); //cit:title
-                    xmlw.writeStartElement("cit:presentationForm");
-                    xmlw.writeStartElement("cit:CI_PresentationFormCode");
-                    xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
-                    xmlw.writeAttribute("codeListValue", "documentDigital");
-                    xmlw.writeCharacters("documentDigital");
-                    xmlw.writeEndElement(); //cit:CI_PresentationFormCode
-                    xmlw.writeEndElement(); //cit:presentationForm
-                    xmlw.writeEndElement(); //cit:CI_Citation
-                    xmlw.writeEndElement(); //mri:thesaurusName
-                    xmlw.writeEndElement(); //mri:MD_Keywords
-                    xmlw.writeEndElement(); //mri:descriptiveKeywords
                 }
             }
+            String type = findKeywordType(thesaurusName);
+            xmlw.writeStartElement("mri:type");
+            xmlw.writeStartElement("mri:MD_KeywordTypeCode");
+            xmlw.writeAttribute("codeSpace", "ISOTC211/19115");
+            xmlw.writeAttribute("codeList", "http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode");
+            xmlw.writeAttribute("codeListValue", type);
+            xmlw.writeCharacters(type);
+            xmlw.writeEndElement(); //mri:MD_KeywordTypeCode
+            xmlw.writeEndElement(); //mri:type
+
+            if (!type.equals("free keywords") && !thesaurusName.equals("dataverseLocation") && !thesaurusName.equals("dataverseGeographicUnit") ) {
+
+                xmlw.writeStartElement("mri:thesaurusName");
+                xmlw.writeStartElement("cit:CI_Citation");
+                xmlw.writeStartElement("cit:title");
+                xmlw.writeStartElement("gco:CharacterString");
+                xmlw.writeCharacters(thesaurusName);
+                xmlw.writeEndElement(); //gco:CharacterString
+                xmlw.writeEndElement(); //cit:title
+                xmlw.writeStartElement("cit:presentationForm");
+                xmlw.writeStartElement("cit:CI_PresentationFormCode");
+                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
+                xmlw.writeAttribute("codeListValue", "documentDigital");
+                xmlw.writeCharacters("documentDigital");
+                xmlw.writeEndElement(); //cit:CI_PresentationFormCode
+                xmlw.writeEndElement(); //cit:presentationForm
+                xmlw.writeEndElement(); //cit:CI_Citation
+                xmlw.writeEndElement(); //mri:thesaurusName
+            }
+            xmlw.writeEndElement(); //mri:MD_Keywords
+            xmlw.writeEndElement(); //mri:descriptiveKeywords
+
+        }
+
+    }
+
+    private static void useLimitations( XMLStreamWriter xmlw, String restrictions) throws XMLStreamException {
+        if (restrictions != null && !restrictions.isEmpty()) {
+            xmlw.writeStartElement("mri:resourceConstraints");
+            xmlw.writeStartElement("mco:MD_Constraints");
+            xmlw.writeStartElement("mco:useLimitation");
+            xmlw.writeStartElement("gco:CharacterString");
+            xmlw.writeCharacters(restrictions);
+            xmlw.writeEndElement(); //gco:CharacterString
+            xmlw.writeEndElement(); //mco:useLimitation
+            xmlw.writeEndElement(); //mco:MD_Constraints
+            xmlw.writeEndElement(); //mri:resourceConstraints
         }
     }
 
-    private static void writeResourceConstrains(XMLStreamWriter xmlw, String termsOfUse ) throws XMLStreamException {
+    private static void writeResourceConstrains(XMLStreamWriter xmlw, String termsOfUse, String restrictions, String citationrequirements,
+                                                String depositorrequirements, String conditions,
+                                                String disclaimer) throws XMLStreamException {
         logger.info("writeResourceConstrains");
+        //mdb:MD_Metadata/mdb:identificationInfo/mri:MD_DataIdentification/mri:resourceConstraints/mco:MD_LegalConstraints/mco:otherConstraints //terms of us
+        //mri:resourceConstraints/mco:MD_Constraints/mco:UseLimitation //restrictions
+        //mdb:MD_Metadata/mdb:identificationInfo/mri:MD_DataIdentification/mri:resourceConstraints/mco:MD_Constraints/mco:UseLimitation
+        useLimitations( xmlw, restrictions);
+        useLimitations( xmlw, citationrequirements);
+        useLimitations(xmlw, depositorrequirements);
+        useLimitations(xmlw, conditions);
+        useLimitations(xmlw, disclaimer);
+
         if (termsOfUse != null && !termsOfUse.isEmpty()) {
             xmlw.writeStartElement("mri:resourceConstraints");
             xmlw.writeStartElement("mco:MD_LegalConstraints");
-            xmlw.writeStartElement("mco:useConstraints");
-            xmlw.writeStartElement("mco:MD_RestrictionCode");
-            xmlw.writeAttribute("codeList", "standards.iso.org/19115/-3/lan/1.0/codelists.xml#MD_RestrictionCode");
-            xmlw.writeAttribute("codeListValue", termsOfUse);
+            xmlw.writeStartElement("mco:otherConstraints");
+            xmlw.writeStartElement("gco:CharacterString");
             xmlw.writeCharacters(termsOfUse);
-            xmlw.writeEndElement(); //mco:MD_RestrictionCode
-            xmlw.writeEndElement(); //mco:useConstraints
+            xmlw.writeEndElement(); //gco:CharacterString
+            xmlw.writeEndElement(); //mco:otherConstraints
             xmlw.writeEndElement(); //mco:MD_LegalConstraints
             xmlw.writeEndElement(); //mri:resourceConstraints
         }
+
+
+//        if (termsOfUse != null && !termsOfUse.isEmpty()) {
+//            xmlw.writeStartElement("mri:resourceConstraints");
+//            xmlw.writeStartElement("mco:MD_LegalConstraints");
+//            xmlw.writeStartElement("mco:useConstraints");
+//            xmlw.writeStartElement("mco:MD_RestrictionCode");
+//            xmlw.writeAttribute("codeList", "standards.iso.org/19115/-3/lan/1.0/codelists.xml#MD_RestrictionCode");
+//            xmlw.writeAttribute("codeListValue", termsOfUse);
+//            xmlw.writeCharacters(termsOfUse);
+//            xmlw.writeEndElement(); //mco:MD_RestrictionCode
+//            xmlw.writeEndElement(); //mco:useConstraints
+//            xmlw.writeEndElement(); //mco:MD_LegalConstraints
+//            xmlw.writeEndElement(); //mri:resourceConstraints
+//        }
+        logger.info("writeResourceConstrains End");
         //        mri:resourceConstraints>
 //                <mco:MD_LegalConstraints>
 //                <mco:accessConstraints>
@@ -1219,6 +2197,7 @@ public class ISO19115_3ExportUtil {
     }
 
     private static void writeSoftware(XMLStreamWriter xmlw, Field softwareF) throws XMLStreamException {
+        logger.info("writeSoftware");
         int i = 0;
         String software = "";
         if (softwareF != null) {
@@ -1251,6 +2230,7 @@ public class ISO19115_3ExportUtil {
                 xmlw.writeEndElement(); //mri:environmentDescription
             }
         }
+        logger.info("writeSoftware End");
     }
 
     private static void writeNote(XMLStreamWriter xmlw, Field noteF) throws XMLStreamException {
@@ -1265,15 +2245,29 @@ public class ISO19115_3ExportUtil {
         }
     }
 
-    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF) throws XMLStreamException {
-        if (distributionF != null) {
-            List<HashMap<String, Field>> distibution = ((CompoundField) distributionF).getMultipleValues();
-            if (distibution.size() > 0) {
+    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF) throws XMLStreamException {
+        logger.info("writeDistributionInfo");
+        List<HashMap<String, Field>> distribution = null;
+        List<HashMap<String, Field>> distibutor = null;
+        if (distributionF != null || distributionF != null) {
+            if (distributionF != null) {
+                distribution = ((CompoundField) distributionF).getMultipleValues();
+            }
+            if (distributorF != null) {
+                distibutor = ((CompoundField) distributorF).getMultipleValues();
+            }
+            if ((distribution != null && distribution.size() > 0) || (distibutor != null && distibutor.size() > 0)) {
                 xmlw.writeStartElement("mdb:distributionInfo");
                 xmlw.writeStartElement("mrd:MD_Distribution");
+                //mrd:distributor/mrd:distributorContact/cit:CI_Responsibility/cit:party/cit:CI_Organisation/cit:individual/
+                // cit:CI_Individual/cit:name/gco:CharacterString
+                if (distibutor != null && distibutor.size() > 0) {
+                    writeDistributors(xmlw, distibutor);
+                }
+
                 xmlw.writeStartElement("mrd:transferOptions");
                 xmlw.writeStartElement("mrd:MD_DigitalTransferOptions");
-                for ( HashMap<String, Field> foo : distibution) {
+                for ( HashMap<String, Field> foo : distribution) {
                     String distributionLinkLabel = "";
                     String distributionLink = "";
                     String protocol = "";
@@ -1303,6 +2297,84 @@ public class ISO19115_3ExportUtil {
 
             }
         }
+        logger.info("writeDistributionInfo End");
+    }
+
+    private static void writeDistributors(XMLStreamWriter xmlw, List<HashMap<String, Field>> distibutor) throws XMLStreamException {
+        logger.info("writeDistributors");
+        for (HashMap<String, Field> foo : distibutor) {
+            String distributorName = "";
+            String distributorAffiliation = "";
+            Field distributorNameF = foo.get("distributorName");
+            Field distributorAffiliationF = foo.get("distributorAffiliation");
+
+            if (distributorNameF != null) {
+                distributorName = ((PrimitiveField) distributorNameF).getSingleValue();
+            }
+            if (distributorAffiliationF != null) {
+                distributorAffiliation = ((PrimitiveField) distributorAffiliationF).getSingleValue();
+            }
+
+            xmlw.writeStartElement("mrd:distributor");
+            xmlw.writeStartElement("mrd:MD_Distributor");
+            xmlw.writeStartElement("mrd:distributorContact");
+            xmlw.writeStartElement("cit:CI_Responsibility");
+            xmlw.writeStartElement("cit:role");
+            xmlw.writeStartElement("cit:CI_RoleCode");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_RoleCode");
+            xmlw.writeAttribute("codeListValue", "distributor");
+            xmlw.writeCharacters("distributor");
+            xmlw.writeEndElement(); // cit:CI_RoleCode
+            xmlw.writeEndElement(); // cit:role
+            xmlw.writeStartElement("cit:party");
+            xmlw.writeStartElement("cit:CI_Organisation");
+
+            if (distributorAffiliation != null && !distributorAffiliation.isEmpty()) {
+                xmlw.writeStartElement("cit:name");
+                xmlw.writeStartElement("gco:CharacterString");
+                xmlw.writeCharacters(distributorAffiliation);
+                xmlw.writeEndElement(); //gco:CharacterString
+                xmlw.writeEndElement(); //cit:name
+            }
+            logger.info("distributorNameAffiliation after");
+
+            if (distributorName != null && !distributorName.isEmpty()) {
+                logger.info("brfore cit:individual");
+                xmlw.writeStartElement("cit:individual");
+                logger.info("brfore cit:CI_Individual");
+                xmlw.writeStartElement("cit:CI_Individual");
+                logger.info("brfore cit:name");
+                xmlw.writeStartElement("cit:name");
+                logger.info("brfore gco:CharacterString");
+                xmlw.writeStartElement("gco:CharacterString");
+                logger.info("brfore writeCharacters " + distributorName);
+                xmlw.writeCharacters(distributorName);
+                logger.info("brfore end doc");
+                xmlw.writeEndElement(); //gco:CharacterString
+                logger.info("brfore end doc2");
+                xmlw.writeEndElement(); //cit:name
+                logger.info("brfore end doc3");
+                xmlw.writeEndElement(); //cit:CI_Individual
+                logger.info("brfore end doc4");
+                xmlw.writeEndElement(); //cit:individual
+                logger.info("Before Organisation End");
+
+
+            }
+            xmlw.writeEndElement(); //cit:CI_Organisation
+            logger.info("After Organisation End");
+            xmlw.writeEndElement(); //cit:party
+            logger.info("party after");
+            xmlw.writeEndElement(); //cit:CI_Responsibility
+            logger.info("Responsibility after");
+            xmlw.writeEndElement(); //mrd:distributorContact
+            logger.info("distributorContact after");
+            xmlw.writeEndElement(); //mrd:MD_Distributor
+            xmlw.writeEndElement(); //mrd:distributor
+            logger.info("distributor after");
+
+        }
+        logger.info("writeDistributors End");
     }
 
     private static void  onLine(XMLStreamWriter xmlw, String distributionLinkLabel, String distributionLink, String protocol) throws XMLStreamException {
@@ -1313,16 +2385,19 @@ public class ISO19115_3ExportUtil {
         xmlw.writeCharacters(distributionLink);
         xmlw.writeEndElement(); //gco:CharacterString
         xmlw.writeEndElement(); //cit:linkage
+
         xmlw.writeStartElement("cit:protocol");
         xmlw.writeStartElement("gco:CharacterString");
         xmlw.writeCharacters(protocol);
         xmlw.writeEndElement(); //gco:CharacterString
         xmlw.writeEndElement(); //cit:protocol
+
         xmlw.writeStartElement("cit:name");
         xmlw.writeStartElement("gco:CharacterString");
         xmlw.writeCharacters(distributionLinkLabel);
         xmlw.writeEndElement(); //gco:CharacterString
         xmlw.writeEndElement(); //cit:name
+
         xmlw.writeStartElement("cit:function");
         xmlw.writeStartElement("cit:CI_OnLineFunctionCode");
         xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_OnLineFunctionCode" );
@@ -1335,8 +2410,8 @@ public class ISO19115_3ExportUtil {
     }
 
     private static void writeResourceLineage(XMLStreamWriter xmlw, Field lineageStatementF,
-                                      Field sourceDescriptionF, Field processStepF) throws XMLStreamException {
-        if (lineageStatementF != null || sourceDescriptionF != null || processStepF != null) {
+                                       Field processStepF, Field characteristicOfSourcesF) throws XMLStreamException {
+        if (lineageStatementF != null || processStepF != null || characteristicOfSourcesF != null) {
             xmlw.writeStartElement("mdb:resourceLineage");
             xmlw.writeStartElement("mrl:LI_Lineage");
             if (lineageStatementF != null) {
@@ -1349,19 +2424,22 @@ public class ISO19115_3ExportUtil {
                     xmlw.writeEndElement(); //mrl:statement
                 }
             }
-            if (sourceDescriptionF != null) {
-                for (String source : ((PrimitiveField) sourceDescriptionF).getMultipleValues()) {
+            if (characteristicOfSourcesF != null) {
+                String sourceDescription = ((PrimitiveField) characteristicOfSourcesF).getSingleValue();
+                if (sourceDescription != null && !sourceDescription.isEmpty()) {
                     xmlw.writeStartElement("mrl:source");
                     xmlw.writeStartElement("mrl:LI_Source");
                     xmlw.writeStartElement("mrl:description");
                     xmlw.writeStartElement("gco:CharacterString");
-                    xmlw.writeCharacters(source);
+                    xmlw.writeCharacters(sourceDescription);
                     xmlw.writeEndElement(); //gco:CharacterString
                     xmlw.writeEndElement(); //mrl:description
                     xmlw.writeEndElement(); //mrl:LI_Source
                     xmlw.writeEndElement(); //mrl:source
                 }
             }
+            //mdb:MD_Metadata/mdb:resourceLineage/mrl:LI_Lineage/mrl:sourceDescription
+
             if (processStepF != null) {
                 for (String process : ((PrimitiveField) processStepF).getMultipleValues()) {
                     xmlw.writeStartElement("mrl:processStep");
