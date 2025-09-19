@@ -183,7 +183,7 @@ class DataverseFiles {
     private String label;
 
     @JsonProperty("restricted")
-    private String restricted;
+    private boolean restricted;
 
     @JsonProperty("directoryLabel")
     private String directoryLabel;
@@ -199,7 +199,7 @@ class DataverseFiles {
         return label;
     }
 
-    public String getRestricted() {
+    public boolean getRestricted() {
         return restricted;
     }
 
@@ -555,7 +555,7 @@ public class ISO19115_3ExportUtil {
                     datasetContact, description, publication, producer, timePeriodCovered, otherReferences, geographicCoverage,
                     contributor, geographicUnit, productionDate, restrictions, citationrequirements,
                     depositorrequirements, conditions, disclaimer, dataversFiles);
-            writeDistributionInfo(xmlw, distribution, distributor);
+            writeDistributionInfo(xmlw, distribution, distributor, dataversFiles);
             writeResourceLineage(xmlw, lineageStatement, processStep, characteristicOfSources); //unclear
             writeMetadataMaintenance(xmlw, dataset.getDatasetVersion().getOriginalArchive());
             xmlw.writeEndElement(); // MD_Metadata
@@ -687,8 +687,9 @@ public class ISO19115_3ExportUtil {
 //                        </mdb:name>
                 xmlw.writeStartElement("mdb:resourceScope");
                 xmlw.writeStartElement("mcc:MD_ScopeCode");
-                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/mcc/codelists.xml#MD_ScopeCode");
+                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_ScopeCode");
                 xmlw.writeAttribute("codeListValue", resType);
+                xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
                 xmlw.writeCharacters(resType);
                 xmlw.writeEndElement(); //mcc:MD_ScopeCode
                 xmlw.writeEndElement(); //mdb:resourceScope
@@ -712,8 +713,9 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //cit:title
         xmlw.writeStartElement("cit:presentationForm");
         xmlw.writeStartElement("cit:CI_PresentationFormCode");
-        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
+        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#CI_PresentationFormCode");
         xmlw.writeAttribute("codeListValue", "multimediaHardcopy");
+        xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
         xmlw.writeCharacters("multimediaHardcopy");
         xmlw.writeEndElement(); //cit:CI_PresentationFormCode
         xmlw.writeEndElement(); //cit:presentationForm
@@ -766,6 +768,7 @@ public class ISO19115_3ExportUtil {
         xmlw.writeStartElement("lan:MD_CharacterSetCode");
         xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_CharacterSetCode");
         xmlw.writeAttribute("codeListValue", "utf8");
+        xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
         xmlw.writeCharacters("utf8");
         xmlw.writeEndElement(); //MD_CharacterSetCode
         xmlw.writeEndElement(); //characterEncoding
@@ -834,8 +837,9 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //cit:date
         xmlw.writeStartElement("cit:dateType");
         xmlw.writeStartElement("cit:CI_DateTypeCode");
-        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_DateTypeCode");
+        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#CI_DateTypeCode");
         xmlw.writeAttribute("codeListValue", code);
+        xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
         xmlw.writeCharacters(code);
         xmlw.writeEndElement(); //cit:CI_DateTypeCode
         xmlw.writeEndElement(); //cit:dateType
@@ -888,13 +892,13 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //mcc:description
         xmlw.writeEndElement(); //mcc:MD_Identifier
         xmlw.writeEndElement(); //cit:identifier
-        writeOnlineResource(xmlw, "https://geo.scholarsportal.info/thisDataset.html", "https", "Linkage for GeoPortal landing page for this dataset", null, true);
+        writeOnlineResource(xmlw, "https://geo.scholarsportal.info/thisDataset.html", "https", "Linkage for GeoPortal landing page for this dataset", null,"documentDigital");
         xmlw.writeEndElement(); //cit:CI_Citation
         xmlw.writeEndElement(); //mdb:alternativeMetadataReference
     }
 
-    private static void writeOnlineResource(XMLStreamWriter xmlw, String linkage, String protocol, String description, String name, boolean function) throws XMLStreamException {
-        xmlw.writeStartElement("cit:onlineResource");
+    private static void writeOnlineResource(XMLStreamWriter xmlw, String linkage, String protocol, String description, String name, String function) throws XMLStreamException {
+        //xmlw.writeStartElement("cit:onlineResource");
         xmlw.writeStartElement("cit:CI_OnlineResource");
 //        if (name != null && !name.isEmpty()) {
 //            xmlw.writeStartElement("cit:name");
@@ -927,17 +931,24 @@ public class ISO19115_3ExportUtil {
             xmlw.writeEndElement(); //gco:CharacterString
             xmlw.writeEndElement(); //cit:description
         }
-        if (function) {
+        if (function != null && !function.isEmpty()) {
             xmlw.writeStartElement("cit:function");
             xmlw.writeStartElement("cit:CI_OnLineFunctionCode");
-            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_OnLineFunctionCode");
-            xmlw.writeAttribute("codeListValue", "download");
-            xmlw.writeCharacters("documentDigital");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#CI_DateTypeCode");
+
+            if (function.equals("documentDigital")) {
+                xmlw.writeAttribute("codeListValue", "download");
+            } else {
+                xmlw.writeAttribute("codeListValue", function);
+            }
+
+            xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
+            xmlw.writeCharacters(function);
             xmlw.writeEndElement(); //cit:CI_OnLineFunctionCode
             xmlw.writeEndElement(); //cit:function
         }
         xmlw.writeEndElement(); //cit:CI_OnlineResource
-        xmlw.writeEndElement(); //cit:onlineResource
+        //xmlw.writeEndElement(); //cit:onlineResource
     }
 
     private static void writeAlternativeMetadataReference(XMLStreamWriter xmlw, Field otherIdF) throws XMLStreamException {
@@ -1024,74 +1035,132 @@ public class ISO19115_3ExportUtil {
         //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_GridSpatialRepresentation/msr:axisDimensionProperties/msr:numberOfDimensions/msr:MD_CellGeometryCode
 
 
-        if ((geometricObjectCount != null && !geometricObjectCount.isEmpty()) ||
-                (numberOfDimensions != null && !numberOfDimensions.isEmpty()) ||
-                (geometricObjectType != null && !geometricObjectType.isEmpty()) || (cellGeometry != null && !cellGeometry.isEmpty())) {
+        if ((numberOfDimensions != null && !numberOfDimensions.isEmpty()) ||
+                (cellGeometry != null && !cellGeometry.isEmpty()) || axisDimensionPropertyF != null) {
 
             xmlw.writeStartElement("mdb:spatialRepresentationInfo");
-            if ((numberOfDimensions != null && !numberOfDimensions.isEmpty()) || (cellGeometry != null && !cellGeometry.isEmpty())) {
-                xmlw.writeStartElement("msr:MD_GridSpatialRepresentation");
+            xmlw.writeStartElement("msr:MD_GridSpatialRepresentation");
 
-                if (cellGeometry != null && !cellGeometry.isEmpty()) {
+            if (numberOfDimensions != null && !numberOfDimensions.isEmpty()) {
+
+                xmlw.writeStartElement("msr:numberOfDimensions");
+                xmlw.writeStartElement("gco:Integer");
+                xmlw.writeCharacters(numberOfDimensions);
+                xmlw.writeEndElement(); //gco:Integer
+                xmlw.writeEndElement(); //msr:numberOfDimensions
+
+                //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_GridSpatialRepresentation/msr:numberOfDimensions/gco:Integer
+            }
+            //axisDimensionProperties
+            if (axisDimensionPropertyF != null) {
+                for (HashMap<String, Field> foo : ((CompoundField) axisDimensionPropertyF).getMultipleValues()) {
+                    Field dimensionNameTypeF = foo.get("dimensionNameType");
+                    Field dimensionSizeF = foo.get("dimensionSize");
+                    Field resolutionF = foo.get("resolution");
+                    Field resolutionUnitOfMeasureF = foo.get("resolutionUnitOfMeasure");
+                    String resolutionUnitOfMeasure = "";
+                    String resolution = "";
+                    String dimensionSize = "";
+                    String dimensionNameType = "";
+                    if (dimensionNameTypeF != null) {
+                        dimensionNameType = ((ControlledVocabularyField) dimensionNameTypeF).getSingleValue();
+                    }
+                    if (dimensionSizeF != null) {
+                        dimensionSize = ((PrimitiveField) dimensionSizeF).getSingleValue();
+                    }
+                    if (resolutionF != null) {
+                        resolution = ((PrimitiveField) resolutionF).getSingleValue();
+                    }
+                    if (resolutionUnitOfMeasureF != null) {
+                        resolutionUnitOfMeasure = ((PrimitiveField) resolutionUnitOfMeasureF).getSingleValue();
+                    }
 
                     xmlw.writeStartElement("msr:axisDimensionProperties");
-                    xmlw.writeStartElement("msr:MD_CellGeometryCode");
-                    xmlw.writeAttribute("codeList", "http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_CellGeometryCode");
-                    xmlw.writeAttribute("codeListValue", cellGeometry);
-                    xmlw.writeCharacters(cellGeometry);
-                    xmlw.writeEndElement(); //msr:MD_CellGeometryCode
+                    xmlw.writeStartElement("msr:MD_Dimension");
+                    if (dimensionNameType != null && !dimensionNameType.isEmpty()) {
+                        xmlw.writeStartElement("msr:dimensionName");
+                        xmlw.writeStartElement("msr:MD_DimensionNameTypeCode");
+                        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_DimensionNameTypeCode");
+                        xmlw.writeAttribute("codeListValue", dimensionNameType);
+                        xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
+                        xmlw.writeCharacters(dimensionNameType);
+                        xmlw.writeEndElement(); //msr:MD_DimensionNameTypeCode
+                        xmlw.writeEndElement(); //msr:dimensionName
+                    }
+                    if (dimensionSize != null && !dimensionSize.isEmpty()) {
+                        xmlw.writeStartElement("msr:dimensionSize");
+                        xmlw.writeStartElement("gco:Integer");
+                        xmlw.writeCharacters(dimensionSize);
+                        xmlw.writeEndElement(); //gco:Integer
+                        xmlw.writeEndElement(); //msr:dimensionSize
+                    }
+                    if ((resolution != null && !resolution.isEmpty()) || (resolutionUnitOfMeasure != null && !resolutionUnitOfMeasure.isEmpty())) {
+                        xmlw.writeStartElement("msr:resolution");
+                        xmlw.writeStartElement("gco:Measure");
+                        xmlw.writeAttribute(("uom"), resolutionUnitOfMeasure);
+                        xmlw.writeCharacters(resolution);
+                        xmlw.writeEndElement(); //gco:Measure
+                        xmlw.writeEndElement(); //msr:resolution
+                    }
+                    xmlw.writeEndElement(); //msr:MD_Dimension
                     xmlw.writeEndElement(); //msr:axisDimensionProperties
-                    xmlw.writeEndElement(); //msr:MD_GridSpatialRepresentation
                 }
-                //xmlw.writeStartElement("msr:MD_SpatialRepresentation");
 
-                if (numberOfDimensions != null && !numberOfDimensions.isEmpty()) {
-
-                    xmlw.writeStartElement("msr:numberOfDimensions");
-                    xmlw.writeStartElement("gco:Integer");
-                    xmlw.writeCharacters(numberOfDimensions);
-                    xmlw.writeEndElement(); //gco:Integer
-                    xmlw.writeEndElement(); //msr:numberOfDimensions
-
-                    //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_GridSpatialRepresentation/msr:numberOfDimensions/gco:Integer
-                }
-                xmlw.writeEndElement(); //msr:MD_GridSpatialRepresentation
             }
 
-            if ((geometricObjectCount != null && !geometricObjectCount.isEmpty()) ||
-                    (geometricObjectType != null && !geometricObjectType.isEmpty())) {
-                //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_VectorSpatialRepresentation/geometricObjects/MD_GeometricObjects/
-                //xmlw.writeStartElement("msr:MD_SpatialRepresentation");
-                xmlw.writeStartElement("msr:MD_VectorSpatialRepresentation");
-                xmlw.writeStartElement("msr:geometricObjects");
-                xmlw.writeStartElement("msr:MD_GeometricObjects");
-
-                if (geometricObjectType != null && !geometricObjectType.isEmpty()) {
-                    xmlw.writeStartElement("msr:geometricObjectType");
-                    xmlw.writeStartElement("msr:MD_GeometricObjectTypeCode");
-                    xmlw.writeAttribute("codeSpace", "ISOTC211/19115");
-                    xmlw.writeAttribute("codeList", "http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_GeometricObjectTypeCode");
-                    xmlw.writeAttribute("codeListValue", geometricObjectType);
-                    xmlw.writeCharacters(geometricObjectType);
-                    xmlw.writeEndElement(); //msr:MD_GeometricObjectTypeCode
-                    xmlw.writeEndElement(); //msr:geometricObjectType
-                }
-
-                if (geometricObjectCount != null && !geometricObjectCount.isEmpty()) {
-                    xmlw.writeStartElement("msr:geometricObjectCount");
-                    xmlw.writeStartElement("gco:Integer");
-                    xmlw.writeCharacters(geometricObjectCount);
-                    xmlw.writeEndElement(); //gco:Integer
-                    xmlw.writeEndElement(); //mrs:geometricObjectCount
-                }
-                xmlw.writeEndElement(); //msr:MD_GeometricObjects
-                xmlw.writeEndElement(); //msr:geometricObjects
-                xmlw.writeEndElement(); //msr:MD_VectorSpatialRepresentation
-                //xmlw.writeEndElement(); //msr:MD_SpatialRepresentation
+            //cellGeometry
+            if (cellGeometry != null && !cellGeometry.isEmpty()) {
+                xmlw.writeStartElement("msr:cellGeometry");
+                xmlw.writeStartElement("msr:MD_CellGeometryCode");
+                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_CellGeometryCode");
+                xmlw.writeAttribute("codeListValue", cellGeometry);
+                xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
+                xmlw.writeCharacters(cellGeometry);
+                xmlw.writeEndElement(); //msr:MD_CellGeometryCode
+                xmlw.writeEndElement(); //msr:cellGeometry
             }
-            //xmlw.writeEndElement(); //msr:MD_SpatialRepresentation
+            xmlw.writeStartElement("msr:transformationParameterAvailability");
+            xmlw.writeEndElement(); //msr:transformationParameterAvailability
+            xmlw.writeEndElement(); //msr:MD_GridSpatialRepresentation
             xmlw.writeEndElement(); //mdb:spatialRepresentationInfo
+
         }
+
+        if ((geometricObjectCount != null && !geometricObjectCount.isEmpty()) ||
+                (geometricObjectType != null && !geometricObjectType.isEmpty())) {
+            //mdb:MD_Metadata/mdb:spatialRepresentationInfo/msr:MD_SpatialRepresentation/msr:MD_VectorSpatialRepresentation/geometricObjects/MD_GeometricObjects/
+            //xmlw.writeStartElement("msr:MD_SpatialRepresentation");
+            xmlw.writeStartElement("mdb:spatialRepresentationInfo");
+            xmlw.writeStartElement("msr:MD_VectorSpatialRepresentation");
+            xmlw.writeStartElement("msr:geometricObjects");
+            xmlw.writeStartElement("msr:MD_GeometricObjects");
+
+            if (geometricObjectType != null && !geometricObjectType.isEmpty()) {
+                xmlw.writeStartElement("msr:geometricObjectType");
+                xmlw.writeStartElement("msr:MD_GeometricObjectTypeCode");
+                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_GeometricObjectTypeCode");
+                xmlw.writeAttribute("codeListValue", geometricObjectType);
+                xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
+                xmlw.writeCharacters(geometricObjectType);
+                xmlw.writeEndElement(); //msr:MD_GeometricObjectTypeCode
+                xmlw.writeEndElement(); //msr:geometricObjectType
+            }
+
+            if (geometricObjectCount != null && !geometricObjectCount.isEmpty()) {
+                xmlw.writeStartElement("msr:geometricObjectCount");
+                xmlw.writeStartElement("gco:Integer");
+                xmlw.writeCharacters(geometricObjectCount);
+                xmlw.writeEndElement(); //gco:Integer
+                xmlw.writeEndElement(); //mrs:geometricObjectCount
+            }
+            xmlw.writeEndElement(); //msr:MD_GeometricObjects
+            xmlw.writeEndElement(); //msr:geometricObjects
+            xmlw.writeEndElement(); //msr:MD_VectorSpatialRepresentation
+            xmlw.writeEndElement(); //mdb:spatialRepresentationInfo
+            //xmlw.writeEndElement(); //msr:MD_SpatialRepresentation
+        }
+        //xmlw.writeEndElement(); //msr:MD_SpatialRepresentation
+
 
     }
 
@@ -1159,10 +1228,10 @@ public class ISO19115_3ExportUtil {
         writeExtent(xmlw, geographicBoundingBox, timePeriodCovered, geographicCoverage);
         writeAdditionalDocumentation(xmlw, otherReferences);
         writeAdditionalDocumentationForDataverseFiles(xmlw, dataverseFiles);
+        writeThumbnails(xmlw, dataverseFiles);
         writeDescritiveKeywords(xmlw, keyword, geographicCoverage, geographicUnit);
         writeResourceConstrains(xmlw, termsOfuse, restrictions, citationrequirements, depositorrequirements, conditions, disclaimer);
         writeAssociatedResource(xmlw, publication);
-
         writeSoftware(xmlw, software);
         writeNote(xmlw, note);
 
@@ -1174,6 +1243,46 @@ public class ISO19115_3ExportUtil {
         xmlw.writeEndElement(); //mri:MD_DataIdentification
         xmlw.writeEndElement(); //mdb:identificationInfo
         logger.info("writeIdentificationInfo");
+    }
+
+    private static void writeThumbnails(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException {
+        if (dataverseFiles != null) {
+            String serverName = "https://dvdev.scholarsportal.info";
+            for (DataverseFiles file : dataverseFiles) {
+
+                if (file.getDirectoryLabel().equals("thumbnails")) {
+                    xmlw.writeStartElement("mri:graphicOverview");
+                    xmlw.writeStartElement("mcc:MD_BrowseGraphic");
+
+                    xmlw.writeStartElement("mcc:fileName");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters(file.getLabel());
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //mcc:fileName
+
+                    xmlw.writeStartElement("mcc:fileDescription");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters(file.getDescription());
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //mcc:fileDescription
+
+                    xmlw.writeStartElement("mcc:fileType");
+                    xmlw.writeStartElement("gco:CharacterString");
+                    xmlw.writeCharacters("png");
+                    xmlw.writeEndElement(); //gco:CharacterString
+                    xmlw.writeEndElement(); //mcc:fileType
+
+                    xmlw.writeStartElement("mcc:linkage");
+                    String url = serverName + "/api/access/datafile/" + Integer.toString(file.getDataFile().getId());
+                    writeOnlineResource(xmlw, url, "https", file.getDescription(), file.getLabel(),  null);
+                    xmlw.writeEndElement(); //mcc:linkage
+
+                    xmlw.writeEndElement(); //mcc:MD_BrowseGraphic
+                    xmlw.writeEndElement(); //mri:graphicOverview
+                }
+            }
+        }
+
     }
 
     private static void writeAdditionalDocumentationForDataverseFiles(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException, UnknownHostException {
@@ -1197,7 +1306,15 @@ public class ISO19115_3ExportUtil {
                     xmlw.writeEndElement(); //gco:CharacterString
                     xmlw.writeEndElement(); //cit:title
                     String url = serverName + "/api/access/datafile/" + Integer.toString(file.getDataFile().getId());
-                    writeOnlineResource(xmlw, url, "https", file.getDescription(), file.getDirectoryLabel(), false);
+                    xmlw.writeStartElement("cit:onlineResource");
+                    String description = file.getDescription();
+                    if ((description == null || description.isEmpty()) && file.getRestricted()) {
+                        description = "(restricted)";
+                    } else if (file.getRestricted()) {
+                        description = description + " (restricted)";
+                    }
+                    writeOnlineResource(xmlw, url, "https", description, file.getLabel(),  null);
+                    xmlw.writeEndElement(); //cit:onlineResource
                     xmlw.writeEndElement(); //cit:CI_Citation
                     xmlw.writeEndElement(); //mri:additionalDocumentation
                 }
@@ -1300,7 +1417,9 @@ public class ISO19115_3ExportUtil {
                 xmlw.writeEndElement(); //cit:title
             }
             if (!publicationURL.isEmpty()) {
-                writeOnlineResource(xmlw, publicationURL, "https", null, null, false);
+                xmlw.writeStartElement("cit:onlineResource");
+                writeOnlineResource(xmlw, publicationURL, "https", null, null,  null);
+                xmlw.writeEndElement(); //cit:onlineResource
             }
             xmlw.writeEndElement(); //cit:CI_Citation
             xmlw.writeEndElement(); //mri:name
@@ -1310,8 +1429,9 @@ public class ISO19115_3ExportUtil {
             xmlw.writeStartElement("mri:associationType");
             xmlw.writeStartElement("mri:DS_AssociationTypeCode");
 
-            xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#DS_AssociationTypeCode");
+            xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#DS_AssociationTypeCode");
             xmlw.writeAttribute("codeListValue",publicationRelationType);
+            xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
 
 //            xmlw.writeStartElement("gco:CharacterString");
 //            xmlw.writeCharacters(publicationRelationType);
@@ -1544,8 +1664,9 @@ public class ISO19115_3ExportUtil {
         xmlw.writeStartElement("cit:CI_Responsibility");
         xmlw.writeStartElement("cit:role");
         xmlw.writeStartElement("cit:CI_RoleCode");
-        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_RoleCode");
+        xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#CI_RoleCode");
         xmlw.writeAttribute("codeListValue", role);
+        xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
         xmlw.writeCharacters(role);
         xmlw.writeEndElement(); // cit:CI_RoleCode
         xmlw.writeEndElement(); // cit:role
@@ -1686,8 +1807,9 @@ public class ISO19115_3ExportUtil {
             xmlw.writeStartElement("cit:role");
             // <cit:CI_RoleCode codeList="http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_RoleCode" codeListValue="pointOfContact">pointOfContact</cit:CI_RoleCode>
             xmlw.writeStartElement("cit:CI_RoleCode");
-            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_RoleCode");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#CI_RoleCode");
             xmlw.writeAttribute("codeListValue", "pointOfContact");
+            xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
             xmlw.writeCharacters("pointOfContact");
             xmlw.writeEndElement(); //cit:CI_RoleCode
             xmlw.writeEndElement(); //cit:role
@@ -1744,9 +1866,9 @@ public class ISO19115_3ExportUtil {
             if (spatialRepresentationType != null && !spatialRepresentationType.isEmpty()) {
                 xmlw.writeStartElement("mri:spatialRepresentationType");
                 xmlw.writeStartElement("mcc:MD_SpatialRepresentationTypeCode");
-                xmlw.writeAttribute("codeSpace", "ISOTC211/19115");
-                xmlw.writeAttribute("codeList", "mcc:MD_SpatialRepresentationTypeCode");
+                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_SpatialRepresentationTypeCode");
                 xmlw.writeAttribute("codeListValue", spatialRepresentationType);
+                xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
                 xmlw.writeCharacters(spatialRepresentationType);
                 xmlw.writeEndElement(); //mcc:spatialRepresentationTypeCode
                 xmlw.writeEndElement(); //mri:spatialRepresentationType
@@ -1823,6 +1945,9 @@ public class ISO19115_3ExportUtil {
                 if (topicClassificationValue != null &&  !topicClassificationValue.isEmpty()) {
                     xmlw.writeStartElement("mri:topicCategory");
                     xmlw.writeStartElement("mri:MD_TopicCategoryCode");
+//                    xmlw.writeAttribute("CodeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_TopicCategoryCode");
+//                    xmlw.writeAttribute("CodeListValue", topicClassificationValue);
+//                    xmlw.writeAttribute("CodeSpace", "http://standards.iso.org/iso/19115");
                     logger.info("Topic classification: " + topicClassificationValue);
                     xmlw.writeCharacters(topicClassificationValue);
                     xmlw.writeEndElement(); //mri:MD_TopicCategoryCode
@@ -2099,9 +2224,9 @@ public class ISO19115_3ExportUtil {
             String type = findKeywordType(thesaurusName);
             xmlw.writeStartElement("mri:type");
             xmlw.writeStartElement("mri:MD_KeywordTypeCode");
-            xmlw.writeAttribute("codeSpace", "ISOTC211/19115");
-            xmlw.writeAttribute("codeList", "http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_KeywordTypeCode");
             xmlw.writeAttribute("codeListValue", type);
+            xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
             xmlw.writeCharacters(type);
             xmlw.writeEndElement(); //mri:MD_KeywordTypeCode
             xmlw.writeEndElement(); //mri:type
@@ -2117,8 +2242,9 @@ public class ISO19115_3ExportUtil {
                 xmlw.writeEndElement(); //cit:title
                 xmlw.writeStartElement("cit:presentationForm");
                 xmlw.writeStartElement("cit:CI_PresentationFormCode");
-                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_PresentationFormCode");
+                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#CI_PresentationFormCode");
                 xmlw.writeAttribute("codeListValue", "documentDigital");
+                xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
                 xmlw.writeCharacters("documentDigital");
                 xmlw.writeEndElement(); //cit:CI_PresentationFormCode
                 xmlw.writeEndElement(); //cit:presentationForm
@@ -2245,7 +2371,7 @@ public class ISO19115_3ExportUtil {
         }
     }
 
-    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF) throws XMLStreamException {
+    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException {
         logger.info("writeDistributionInfo");
         List<HashMap<String, Field>> distribution = null;
         List<HashMap<String, Field>> distibutor = null;
@@ -2285,11 +2411,41 @@ public class ISO19115_3ExportUtil {
                         protocol = ((PrimitiveField) protocolF).getSingleValue();
                     }
 
-
-
-                    onLine(xmlw, distributionLinkLabel, distributionLink, protocol);
+                    xmlw.writeStartElement("mrd:onLine");
+                    writeOnlineResource(xmlw, distributionLink, "https", distributionLinkLabel, null,"fileAccess");
+                    xmlw.writeEndElement(); //mrd:onLine
+                    //onLine(xmlw, distributionLinkLabel, distributionLink, protocol);
 
                 }
+                //Add zip file link
+                if (dataverseFiles != null) {
+                    String serverName = "https://dvdev.scholarsportal.info";
+                    String url = serverName + "/api/access/datafiles/";
+                    ArrayList fileIds = new ArrayList();
+                    for (DataverseFiles file : dataverseFiles) {
+                        if (file.getDirectoryLabel() != null && file.getDirectoryLabel().equals("zips")) {
+                            String file_id = Integer.toString(file.getDataFile().getId());
+                            fileIds.add(file_id);
+                        }
+                    }
+                    int i = 1;
+                    int numOfFiles = fileIds.size();
+                    for (String fileId : (ArrayList<String>) fileIds) {
+                        url = url + fileId;
+                        if (i < numOfFiles) {
+                            url = url + ",";
+                        }
+                        i++;
+                    }
+                    if (i > 0) {
+                        url = url + "?format=original";
+
+                        xmlw.writeStartElement("mrd:onLine");
+                        writeOnlineResource(xmlw, url, "https", "Zip file", null, null);
+                        xmlw.writeEndElement(); //mrd:onLine
+                    }
+                }
+
                 xmlw.writeEndElement(); //mrd:MD_DigitalTransferOptions
                 xmlw.writeEndElement(); //mrd:transferOptions
                 xmlw.writeEndElement(); //mrd:MD_Distribution
@@ -2321,8 +2477,9 @@ public class ISO19115_3ExportUtil {
             xmlw.writeStartElement("cit:CI_Responsibility");
             xmlw.writeStartElement("cit:role");
             xmlw.writeStartElement("cit:CI_RoleCode");
-            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_RoleCode");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#CI_RoleCode");
             xmlw.writeAttribute("codeListValue", "distributor");
+            xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
             xmlw.writeCharacters("distributor");
             xmlw.writeEndElement(); // cit:CI_RoleCode
             xmlw.writeEndElement(); // cit:role
@@ -2377,37 +2534,44 @@ public class ISO19115_3ExportUtil {
         logger.info("writeDistributors End");
     }
 
-    private static void  onLine(XMLStreamWriter xmlw, String distributionLinkLabel, String distributionLink, String protocol) throws XMLStreamException {
-        xmlw.writeStartElement("mrd:onLine");
-        xmlw.writeStartElement("cit:CI_OnlineResource");
-        xmlw.writeStartElement("cit:linkage");
-        xmlw.writeStartElement("gco:CharacterString");
-        xmlw.writeCharacters(distributionLink);
-        xmlw.writeEndElement(); //gco:CharacterString
-        xmlw.writeEndElement(); //cit:linkage
-
-        xmlw.writeStartElement("cit:protocol");
-        xmlw.writeStartElement("gco:CharacterString");
-        xmlw.writeCharacters(protocol);
-        xmlw.writeEndElement(); //gco:CharacterString
-        xmlw.writeEndElement(); //cit:protocol
-
-        xmlw.writeStartElement("cit:name");
-        xmlw.writeStartElement("gco:CharacterString");
-        xmlw.writeCharacters(distributionLinkLabel);
-        xmlw.writeEndElement(); //gco:CharacterString
-        xmlw.writeEndElement(); //cit:name
-
-        xmlw.writeStartElement("cit:function");
-        xmlw.writeStartElement("cit:CI_OnLineFunctionCode");
-        xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_OnLineFunctionCode" );
-        xmlw.writeAttribute( "codeListValue","fileAccess");
-        xmlw.writeCharacters("fileAccess");
-        xmlw.writeEndElement(); //cit:CI_OnLineFunctionCode
-        xmlw.writeEndElement(); //cit:function
-        xmlw.writeEndElement(); //cit:CI_OnlineResource
-        xmlw.writeEndElement(); //mrd:onLine
-    }
+//    private static void  onLine(XMLStreamWriter xmlw, String distributionLinkLabel, String distributionLink, String protocol) throws XMLStreamException {
+//        xmlw.writeStartElement("mrd:onLine");
+//        xmlw.writeStartElement("cit:CI_OnlineResource");
+//        xmlw.writeStartElement("cit:linkage");
+//        xmlw.writeStartElement("gco:CharacterString");
+//        xmlw.writeCharacters(distributionLink);
+//        xmlw.writeEndElement(); //gco:CharacterString
+//        xmlw.writeEndElement(); //cit:linkage
+//
+//        xmlw.writeStartElement("cit:protocol");
+//        xmlw.writeStartElement("gco:CharacterString");
+//        xmlw.writeCharacters(protocol);
+//        xmlw.writeEndElement(); //gco:CharacterString
+//        xmlw.writeEndElement(); //cit:protocol
+//
+//        xmlw.writeStartElement("cit:name");
+//        xmlw.writeStartElement("gco:CharacterString");
+//        xmlw.writeCharacters(distributionLinkLabel);
+//        xmlw.writeEndElement(); //gco:CharacterString
+//        xmlw.writeEndElement(); //cit:name
+//
+//        xmlw.writeStartElement("cit:description");
+//        xmlw.writeStartElement("gco:CharacterString");
+//        xmlw.writeCharacters(description);
+//        xmlw.writeEndElement(); //gco:CharacterString
+//        xmlw.writeEndElement(); //cit:description
+//
+//        xmlw.writeStartElement("cit:function");
+//        xmlw.writeStartElement("cit:CI_OnLineFunctionCode");
+//        xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codeLists.xml#CI_OnLineFunctionCode" );
+//        xmlw.writeAttribute( "codeListValue",function);
+//        xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
+//        xmlw.writeCharacters("fileAccess");
+//        xmlw.writeEndElement(); //cit:CI_OnLineFunctionCode
+//        xmlw.writeEndElement(); //cit:function
+//        xmlw.writeEndElement(); //cit:CI_OnlineResource
+//        xmlw.writeEndElement(); //mrd:onLine
+//    }
 
     private static void writeResourceLineage(XMLStreamWriter xmlw, Field lineageStatementF,
                                        Field processStepF, Field characteristicOfSourcesF) throws XMLStreamException {
