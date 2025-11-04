@@ -544,7 +544,7 @@ public class ISO19115_3ExportUtil {
             writeDateInfo(xmlw, description, "revised");
             writeDateDepositeInfo(xmlw, dateOfDeposit);
             //writeAlternativeMetadataReferenceForDataset(xmlw);
-            writeAlternativeMetadataReference(xmlw, otherId);
+            String newOtherId = writeAlternativeMetadataReference(xmlw, otherId);
             writeSpatialRepresentationInfo(xmlw, geometricObjectCount, geometricObjectType, numberOfDimensions,
                     axisDimensionProperties, cellGeometry);
             writeReferenceSystemInfo(xmlw, referenceSystemInfo);
@@ -555,7 +555,7 @@ public class ISO19115_3ExportUtil {
                     datasetContact, description, publication, producer, timePeriodCovered, otherReferences, geographicCoverage,
                     contributor, geographicUnit, productionDate, restrictions, citationrequirements,
                     depositorrequirements, conditions, disclaimer, dataversFiles);
-            writeDistributionInfo(xmlw, distribution, distributor, dataversFiles);
+            writeDistributionInfo(xmlw, distribution, distributor, dataversFiles, newOtherId);
             writeResourceLineage(xmlw, lineageStatement, processStep, characteristicOfSources); //unclear
             writeMetadataMaintenance(xmlw, dataset.getDatasetVersion().getOriginalArchive());
             xmlw.writeEndElement(); // MD_Metadata
@@ -566,7 +566,7 @@ public class ISO19115_3ExportUtil {
             InputStream in = new ByteArrayInputStream(baos.toByteArray());
 
 //
-            ISO_Validator isoVal = new ISO_Validator("19115/-3/mdb/2.0/mdb.xsd");
+            ISO_Validator isoVal = new ISO_Validator("iso/19115/-3/mdb/2.0/mdb.xsd");
             isoVal.validate(in);
             logger.info("After validation ending");
             outputStream.write(baos.toByteArray());
@@ -673,11 +673,16 @@ public class ISO19115_3ExportUtil {
 
     private static void writeMetadataScope(XMLStreamWriter xmlw, Field resourceType) throws XMLStreamException {
         //mdb:MD_Metadata/mdb:metadataScope/mdb:MD_MetadataScope
+        String resType = "dataset"; //default
         if (resourceType != null) {
-            String resType = ((ControlledVocabularyField) resourceType).getSingleValue();
-            if (resType != null && !resType.isEmpty()) {
-                xmlw.writeStartElement("mdb:metadataScope");
-                xmlw.writeStartElement("mdb:MD_MetadataScope");
+            resType = ((ControlledVocabularyField) resourceType).getSingleValue();
+        }
+        if (resType.isEmpty()) {
+            resType = "dataset"; //default
+        }
+        if (resType != null && !resType.isEmpty()) {
+            xmlw.writeStartElement("mdb:metadataScope");
+            xmlw.writeStartElement("mdb:MD_MetadataScope");
 //                <mdb:resourceScope>
 //                        <mcc:MD_ScopeCode codeList="http://standards.iso.org/iso/19115/-3/mcc/1.0/codelists.xml#MD_ScopeCode"
 //                codeListValue="dataset">dataset</mcc:MD_ScopeCode>
@@ -685,20 +690,20 @@ public class ISO19115_3ExportUtil {
 //                        <mdb:name>
 //                        <gco:CharacterString>Main dataset metadata</gco:CharacterString>
 //                        </mdb:name>
-                xmlw.writeStartElement("mdb:resourceScope");
-                xmlw.writeStartElement("mcc:MD_ScopeCode");
-                xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_ScopeCode");
-                xmlw.writeAttribute("codeListValue", resType);
-                xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
-                xmlw.writeCharacters(resType);
-                xmlw.writeEndElement(); //mcc:MD_ScopeCode
-                xmlw.writeEndElement(); //mdb:resourceScope
-                xmlw.writeEndElement(); //mdb:MD_MetadataScope
-                xmlw.writeEndElement(); //mdb:metadataScope
-                xmlw.writeStartElement("mdb:contact");
-                xmlw.writeEndElement();
-            }
+            xmlw.writeStartElement("mdb:resourceScope");
+            xmlw.writeStartElement("mcc:MD_ScopeCode");
+            xmlw.writeAttribute("codeList", "http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#MD_ScopeCode");
+            xmlw.writeAttribute("codeListValue", resType);
+            xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
+            xmlw.writeCharacters(resType);
+            xmlw.writeEndElement(); //mcc:MD_ScopeCode
+            xmlw.writeEndElement(); //mdb:resourceScope
+            xmlw.writeEndElement(); //mdb:MD_MetadataScope
+            xmlw.writeEndElement(); //mdb:metadataScope
+            xmlw.writeStartElement("mdb:contact");
+            xmlw.writeEndElement();
         }
+
     }
 
     private static void writeDatasetPersistentId(XMLStreamWriter xmlw, String persistentId, String authority, String protocol) throws XMLStreamException {
@@ -951,9 +956,10 @@ public class ISO19115_3ExportUtil {
         //xmlw.writeEndElement(); //cit:onlineResource
     }
 
-    private static void writeAlternativeMetadataReference(XMLStreamWriter xmlw, Field otherIdF) throws XMLStreamException {
+    private static String writeAlternativeMetadataReference(XMLStreamWriter xmlw, Field otherIdF) throws XMLStreamException {
         String otherId = "";
         String otherIdAgency = "";
+        String newOtherId = "";
         if (otherIdF != null) {
             for (HashMap<String, Field> foo : ((CompoundField) otherIdF).getMultipleValues()) {
                 Field otherIdAgencyF = foo.get("otherIdAgency");
@@ -965,6 +971,9 @@ public class ISO19115_3ExportUtil {
                     otherIdAgency = ((PrimitiveField) otherIdAgencyF).getSingleValue();
                 }
                 String description = determineOtherIdDescription(otherIdAgency);
+                if (description.equals("GeoPortal Naming Conventions [2025]")) {
+                    newOtherId = otherId;
+                }
 
                 if (otherId != null && !otherId.isEmpty()) {
                     xmlw.writeStartElement("mdb:alternativeMetadataReference");
@@ -1008,6 +1017,7 @@ public class ISO19115_3ExportUtil {
                 }
             }
         }
+        return newOtherId;
     }
 
     private static void writeSpatialRepresentationInfo(XMLStreamWriter xmlw, Field geometricObjectCountF,
@@ -1246,11 +1256,12 @@ public class ISO19115_3ExportUtil {
     }
 
     private static void writeThumbnails(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException {
+        logger.info("Writing thumbnails for dataverse files");
         if (dataverseFiles != null) {
             String serverName = "https://dvdev.scholarsportal.info";
             for (DataverseFiles file : dataverseFiles) {
 
-                if (file.getDirectoryLabel().equals("thumbnails")) {
+                if (file.getDirectoryLabel() != null && file.getDirectoryLabel().equals("thumbnails")) {
                     xmlw.writeStartElement("mri:graphicOverview");
                     xmlw.writeStartElement("mcc:MD_BrowseGraphic");
 
@@ -1268,24 +1279,38 @@ public class ISO19115_3ExportUtil {
 
                     xmlw.writeStartElement("mcc:fileType");
                     xmlw.writeStartElement("gco:CharacterString");
-                    xmlw.writeCharacters("png");
+                    int dotIndex = file.getLabel().lastIndexOf('.'); // Find the last occurrence of '.'
+
+                    if (dotIndex > 0 && dotIndex < file.getLabel().length() - 1) {
+                        xmlw.writeCharacters(file.getLabel().substring(dotIndex + 1));
+                    }
+                    
                     xmlw.writeEndElement(); //gco:CharacterString
                     xmlw.writeEndElement(); //mcc:fileType
 
                     xmlw.writeStartElement("mcc:linkage");
                     String url = serverName + "/api/access/datafile/" + Integer.toString(file.getDataFile().getId());
-                    writeOnlineResource(xmlw, url, "https", file.getDescription(), file.getLabel(),  null);
+                    String description = file.getDescription();
+                    if ((description == null || description.isEmpty()) && file.getRestricted()) {
+                        description = "(restricted)";
+                    } else if (file.getRestricted()) {
+                        description = description + " (restricted)";
+                    }
+                    writeOnlineResource(xmlw, url, "https", description, file.getLabel(),  null);
                     xmlw.writeEndElement(); //mcc:linkage
 
                     xmlw.writeEndElement(); //mcc:MD_BrowseGraphic
                     xmlw.writeEndElement(); //mri:graphicOverview
+                    break; //only first thumbnail
                 }
             }
         }
+        logger.info("Writing thumbnails for dataverse files END");
 
     }
 
     private static void writeAdditionalDocumentationForDataverseFiles(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException, UnknownHostException {
+        logger.info("Writing additional documentation for dataverse files");
         if (dataverseFiles != null) {
 
             String serverName = "https://dvdev.scholarsportal.info"; //default
@@ -1297,7 +1322,7 @@ public class ISO19115_3ExportUtil {
 
 
             for (DataverseFiles file : dataverseFiles) {
-                if (file.getDirectoryLabel().equals("userguides")) {
+                if (file.getDirectoryLabel() != null && file.getDirectoryLabel().equals("userguides")) {
                     xmlw.writeStartElement("mri:additionalDocumentation");
                     xmlw.writeStartElement("cit:CI_Citation");
                     xmlw.writeStartElement("cit:title");
@@ -1321,6 +1346,7 @@ public class ISO19115_3ExportUtil {
 
             }
         }
+        logger.info("Writing additional documentation for dataverse files End");
 
     }
 
@@ -1881,15 +1907,20 @@ public class ISO19115_3ExportUtil {
             for (HashMap<String, Field> foo : ((CompoundField) spatialResolutionF).getMultipleValues()) {
                 String spatialResolutionValue = "";
                 String spatialResolutionType = "";
+                String spatialResolutionUnitOfMeasure = "";
 
                 Field spatialResolutionValueF = foo.get("spatialResolutionValue");
                 Field spatialResolutionTypeF = foo.get("spatialResolutionType");
+                Field spatialResolutionUnitOfMeasureF = foo.get("spatialResolutionUnitOfMeasure");
 
                 if (spatialResolutionValueF != null) {
                     spatialResolutionValue = ((PrimitiveField) spatialResolutionValueF).getSingleValue();
                 }
                 if (spatialResolutionTypeF != null) {
                     spatialResolutionType = ((ControlledVocabularyField) spatialResolutionTypeF).getSingleValue();
+                }
+                if (spatialResolutionUnitOfMeasureF != null) {
+                    spatialResolutionUnitOfMeasure = ((PrimitiveField) spatialResolutionUnitOfMeasureF).getSingleValue();
                 }
 
                 if (spatialResolutionValue != null && !spatialResolutionValue.isEmpty()) {
@@ -1909,6 +1940,51 @@ public class ISO19115_3ExportUtil {
                         xmlw.writeEndElement(); //mri:MD_Resolution
                         xmlw.writeEndElement(); //mri:spatialResolution
                         break;  //only equivalent scale is supported for now
+                    } else if (spatialResolutionType.equals("distance")) {
+                        xmlw.writeStartElement("mri:spatialResolution");
+                        xmlw.writeStartElement("mri:MD_Resolution");
+                        xmlw.writeStartElement("mri:distance");
+                        xmlw.writeStartElement("gco:Distance");
+                        xmlw.writeAttribute("uom", spatialResolutionUnitOfMeasure);
+                        xmlw.writeCharacters(spatialResolutionValue);
+                        xmlw.writeEndElement(); //gco:Distance
+                        xmlw.writeEndElement(); //mri:distance
+                        xmlw.writeEndElement(); //mri:MD_Resolution
+                        xmlw.writeEndElement(); //mri:spatialResolution
+                    } else if (spatialResolutionType.equals("vertical")) {
+                        xmlw.writeStartElement("mri:spatialResolution");
+                        xmlw.writeStartElement("mri:MD_Resolution");
+                        xmlw.writeStartElement("mri:vertical");
+                        xmlw.writeStartElement("mri:MD_Resolution");
+                        xmlw.writeStartElement("gco:Distance");
+                        xmlw.writeAttribute("uom", spatialResolutionUnitOfMeasure);
+                        xmlw.writeCharacters(spatialResolutionValue);
+                        xmlw.writeEndElement(); //gco:Distance
+                        xmlw.writeEndElement(); //mri:MD_Resolution
+                        xmlw.writeEndElement(); //mri:vertical
+                        xmlw.writeEndElement(); //mri:MD_Resolution
+                        xmlw.writeEndElement(); //mri:spatialResolution
+                    } else if (spatialResolutionType.equals("angularDistance")) {
+                        xmlw.writeStartElement("mri:spatialResolution");
+                        xmlw.writeStartElement("mri:MD_Resolution");
+                        xmlw.writeStartElement("mri:angularDistance");
+                        xmlw.writeStartElement("gco:Angle");
+                        xmlw.writeAttribute("uom", spatialResolutionUnitOfMeasure);
+                        xmlw.writeCharacters(spatialResolutionValue);
+                        xmlw.writeEndElement(); //gco:Angle
+                        xmlw.writeEndElement(); //mri:angularDistance
+                        xmlw.writeEndElement(); //mri:MD_Resolution
+                        xmlw.writeEndElement(); //mri:spatialResolution
+                    } else if (spatialResolutionType.equals("levelOfDetail")) {
+                        xmlw.writeStartElement("mri:spatialResolution");
+                        xmlw.writeStartElement("mri:MD_Resolution");
+                        xmlw.writeStartElement("mri:levelOfDetail");
+                        xmlw.writeStartElement("gco:CharacterString");
+                        xmlw.writeCharacters(spatialResolutionValue);
+                        xmlw.writeEndElement(); //gco:CharacterString
+                        xmlw.writeEndElement(); //mri:levelOfDetail
+                        xmlw.writeEndElement(); //mri:MD_Resolution
+                        xmlw.writeEndElement(); //mri:spatialResolution
                     }
 
                 }
@@ -2183,17 +2259,25 @@ public class ISO19115_3ExportUtil {
         if (geographicCoverageF != null) {
             HashMap<String, Field> geoCov = ((CompoundField) geographicCoverageF).getMultipleValues().get(0);
             Field countryF = geoCov.get("country");
-            String country = ((ControlledVocabularyField) countryF).getSingleValue();
-            addKeywordToMap(mapTypeField, country, "dataverseLocation");
+            if (countryF != null) {
+                String country = ((ControlledVocabularyField) countryF).getSingleValue();
+                addKeywordToMap(mapTypeField, country, "dataverseLocation");
+            }
             Field stateF = geoCov.get("state");
-            String state = ((PrimitiveField) stateF).getSingleValue();
-            addKeywordToMap(mapTypeField, state, "dataverseLocation");
+            if (stateF != null) {
+                String state = ((PrimitiveField) stateF).getSingleValue();
+                addKeywordToMap(mapTypeField, state, "dataverseLocation");
+            }
             Field cityF = geoCov.get("city");
-            String city = ((PrimitiveField) cityF).getSingleValue();
-            addKeywordToMap(mapTypeField, city, "dataverseLocation");
+            if (cityF != null) {
+                String city = ((PrimitiveField) cityF).getSingleValue();
+                addKeywordToMap(mapTypeField, city, "dataverseLocation");
+            }
             Field otherGeographicCoverageF = geoCov.get("otherGeographicCoverage");
-            String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
-            addKeywordToMap(mapTypeField, otherGeographicCoverage, "dataverseLocation");
+            if (otherGeographicCoverageF != null) {
+                String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
+                addKeywordToMap(mapTypeField, otherGeographicCoverage, "dataverseLocation");
+            }
 
         }
         if (geographicUnitF != null) {
@@ -2206,6 +2290,7 @@ public class ISO19115_3ExportUtil {
 
     private static void writeDescritiveKeywords(XMLStreamWriter xmlw, Field keywordsF,
                                                 Field geographicCoverageF, Field geographicUnitF) throws XMLStreamException {
+        logger.info("writeDescritiveKeywords");
         HashMap<String, List<String>> mapTypeField = prepareKeywords(keywordsF);
         mapTypeField = addGeographicKeyword(mapTypeField, geographicCoverageF, geographicUnitF);
 
@@ -2255,6 +2340,7 @@ public class ISO19115_3ExportUtil {
             xmlw.writeEndElement(); //mri:descriptiveKeywords
 
         }
+        logger.info("writeDescritiveKeywords END");
 
     }
 
@@ -2371,7 +2457,7 @@ public class ISO19115_3ExportUtil {
         }
     }
 
-    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException {
+    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF, ArrayList<DataverseFiles> dataverseFiles, String newOtherId) throws XMLStreamException {
         logger.info("writeDistributionInfo");
         List<HashMap<String, Field>> distribution = null;
         List<HashMap<String, Field>> distibutor = null;
@@ -2412,18 +2498,24 @@ public class ISO19115_3ExportUtil {
                     }
 
                     xmlw.writeStartElement("mrd:onLine");
-                    writeOnlineResource(xmlw, distributionLink, "https", distributionLinkLabel, null,"fileAccess");
+                    writeOnlineResource(xmlw, distributionLink, protocol, distributionLinkLabel, null,"fileAccess");
                     xmlw.writeEndElement(); //mrd:onLine
                     //onLine(xmlw, distributionLinkLabel, distributionLink, protocol);
 
                 }
                 //Add zip file link
                 if (dataverseFiles != null) {
+                    logger.info("newOtherId:" + newOtherId);
                     String serverName = "https://dvdev.scholarsportal.info";
                     String url = serverName + "/api/access/datafiles/";
                     ArrayList fileIds = new ArrayList();
+                    boolean restricted = false;
                     for (DataverseFiles file : dataverseFiles) {
-                        if (file.getDirectoryLabel() != null && file.getDirectoryLabel().equals("zips")) {
+                        //logger.info(file.getDirectoryLabel());
+                        if (file.getDirectoryLabel() != null && file.getDirectoryLabel().startsWith(newOtherId)) {
+                            if (file.getRestricted()) {
+                                restricted = true;
+                            }
                             String file_id = Integer.toString(file.getDataFile().getId());
                             fileIds.add(file_id);
                         }
@@ -2437,11 +2529,15 @@ public class ISO19115_3ExportUtil {
                         }
                         i++;
                     }
-                    if (i > 0) {
+                    if (i > 1) {
                         url = url + "?format=original";
 
                         xmlw.writeStartElement("mrd:onLine");
-                        writeOnlineResource(xmlw, url, "https", "Zip file", null, null);
+                        String description = "Zip file";
+                        if (restricted) {
+                            description = description + " (restricted)";
+                        }
+                        writeOnlineResource(xmlw, url, "https", description, null, null);
                         xmlw.writeEndElement(); //mrd:onLine
                     }
                 }
