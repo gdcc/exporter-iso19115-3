@@ -62,7 +62,14 @@ public class ISO_Validator {
                 String systemId,
                 String baseURI) {
 
-            if (systemId == null) return null;
+            if (systemId == null) {
+                logger.warn("systemId is null");
+                return null;
+            }
+            logger.info("Resolving resource " + systemId + " for namespace " + namespaceURI + "");
+            if (systemId.equals("xlink.xsd")) {
+                namespaceURI = "/isotc211.org/19115/-3/gco/1.0";
+            }
             String resourcePath = "/";
             namespaceURI = namespaceURI.replace("isotc211.org", "iso");
             int index = namespaceURI.indexOf("iso/");
