@@ -37,12 +37,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.*;
 
 import java.net.InetAddress;
 import java.net.URL;
@@ -315,6 +310,8 @@ class ControlledVocabularyField extends Field {
     }
 }
 
+
+
 public class ISO19115_3ExportUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(ISO19115_3ExportUtil.class);
@@ -329,7 +326,30 @@ public class ISO19115_3ExportUtil {
         // As this is a util class, adding a private constructor disallows instances of this class.
     }
 
-    public static void parseDataverseJson(InputStream jsonInputStream, OutputStream outputStream) {
+    private static Properties getPropValues() throws Exception {
+
+        Properties prop = null;
+        try {
+            InputStream inputStream;
+            prop = new Properties();
+
+            String propFileName = "configs/config.properties";
+                inputStream = ISO19115_3ExportUtil.class.getClassLoader().getResourceAsStream(propFileName);
+                if (inputStream != null) {
+                    prop.load(inputStream);
+                    inputStream.close();
+                } else {
+                    throw new FileNotFoundException("Property configs/config.properties file not found");
+                }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw new Exception("Config file was not loaded");
+        }
+        return prop;
+    }
+
+    public static void parseDataverseJson(InputStream jsonInputStream, OutputStream outputStream) throws Exception {
+        Properties prop  = getPropValues();
         ObjectMapper mapper = new ObjectMapper();
         try {
             logger.info("Read json dataverse");
@@ -554,8 +574,8 @@ public class ISO19115_3ExportUtil {
                     spatialResolution, spatialRepresentationType, dataset.getDatasetVersion().getTermsOfUse(),
                     datasetContact, description, publication, producer, timePeriodCovered, otherReferences, geographicCoverage,
                     contributor, geographicUnit, productionDate, restrictions, citationrequirements,
-                    depositorrequirements, conditions, disclaimer, dataversFiles);
-            writeDistributionInfo(xmlw, distribution, distributor, dataversFiles, newOtherId);
+                    depositorrequirements, conditions, disclaimer, dataversFiles, prop);
+            writeDistributionInfo(xmlw, distribution, distributor, dataversFiles, newOtherId, prop);
             writeResourceLineage(xmlw, lineageStatement, processStep, characteristicOfSources); //unclear
             writeMetadataMaintenance(xmlw, dataset.getDatasetVersion().getOriginalArchive());
             xmlw.writeEndElement(); // MD_Metadata
@@ -1224,7 +1244,9 @@ public class ISO19115_3ExportUtil {
                                                 Field geographicCoverage, Field contributor, Field geographicUnit,
                                                 Field productionDate, String restrictions, String citationrequirements,
                                                 String depositorrequirements, String conditions, String disclaimer,
-                                                ArrayList dataverseFiles) throws XMLStreamException, UnknownHostException {
+                                                ArrayList dataverseFiles, Properties prop) throws XMLStreamException, UnknownHostException {
+
+
         xmlw.writeStartElement("mdb:identificationInfo");
         xmlw.writeStartElement("mri:MD_DataIdentification");
 
@@ -1237,11 +1259,12 @@ public class ISO19115_3ExportUtil {
         writeTopicClass(xmlw, topicClass);
         writeExtent(xmlw, geographicBoundingBox, timePeriodCovered, geographicCoverage);
         writeAdditionalDocumentation(xmlw, otherReferences);
-        writeAdditionalDocumentationForDataverseFiles(xmlw, dataverseFiles);
-        writeThumbnails(xmlw, dataverseFiles);
+        writeAdditionalDocumentationForDataverseFiles(xmlw, dataverseFiles, prop);
+        writeThumbnails(xmlw, dataverseFiles, prop);
         writeDescritiveKeywords(xmlw, keyword, geographicCoverage, geographicUnit);
         writeResourceConstrains(xmlw, termsOfuse, restrictions, citationrequirements, depositorrequirements, conditions, disclaimer);
         writeAssociatedResource(xmlw, publication);
+        writeAssociatedResourceForDataverseFiles(xmlw, dataverseFiles, prop);
         writeSoftware(xmlw, software);
         writeNote(xmlw, note);
 
@@ -1255,10 +1278,11 @@ public class ISO19115_3ExportUtil {
         logger.info("writeIdentificationInfo");
     }
 
-    private static void writeThumbnails(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException {
+    private static void writeThumbnails(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles, Properties prop) throws XMLStreamException {
         logger.info("Writing thumbnails for dataverse files");
         if (dataverseFiles != null) {
-            String serverName = "https://dvdev.scholarsportal.info";
+            logger.info(prop.getProperty("DATAVERSE_URL"));
+            String serverName = prop.getProperty("DATAVERSE_URL");
             for (DataverseFiles file : dataverseFiles) {
 
                 if (file.getDirectoryLabel() != null && file.getDirectoryLabel().equals("thumbnails")) {
@@ -1308,12 +1332,24 @@ public class ISO19115_3ExportUtil {
         logger.info("Writing thumbnails for dataverse files END");
 
     }
+    private static void writeAssociatedResourceForDataverseFiles(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles, Properties prop) throws XMLStreamException {
+        if (dataverseFiles != null) {
+            String serverName = prop.getProperty("DATAVERSE_URL");
+            for (DataverseFiles file : dataverseFiles) {
+                if (file.getDirectoryLabel() != null && (file.getDirectoryLabel().equals("associatedResource"))) {
+                    String url = serverName + "/api/access/datafile/" + Integer.toString(file.getDataFile().getId());
+                    writeSingleAssociatedRes(xmlw, file.getLabel(), url, "dependency", file.getDescription(), file.getLabel());
+                }
+            }
 
-    private static void writeAdditionalDocumentationForDataverseFiles(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles) throws XMLStreamException, UnknownHostException {
+        }
+    }
+
+    private static void writeAdditionalDocumentationForDataverseFiles(XMLStreamWriter xmlw, ArrayList<DataverseFiles> dataverseFiles, Properties prop) throws XMLStreamException, UnknownHostException {
         logger.info("Writing additional documentation for dataverse files");
         if (dataverseFiles != null) {
 
-            String serverName = "https://dvdev.scholarsportal.info"; //default
+            String serverName = prop.getProperty("DATAVERSE_URL"); //default
 //            if (dataverseFiles.size() > 0) {
 //                InetAddress localHost = InetAddress.getLocalHost();
 //                serverName = localHost.getHostName();
@@ -1322,7 +1358,7 @@ public class ISO19115_3ExportUtil {
 
 
             for (DataverseFiles file : dataverseFiles) {
-                if (file.getDirectoryLabel() != null && file.getDirectoryLabel().equals("userguides")) {
+                if (file.getDirectoryLabel() != null && (file.getDirectoryLabel().equals("additionalDocumentation") || file.getDirectoryLabel().equals("userguides") )) {
                     xmlw.writeStartElement("mri:additionalDocumentation");
                     xmlw.writeStartElement("cit:CI_Citation");
                     xmlw.writeStartElement("cit:title");
@@ -1408,13 +1444,70 @@ public class ISO19115_3ExportUtil {
                 Field publicationCitationF = foo.get("publicationCitation");
                 Field publicationURLF = foo.get("publicationURL");
 
-                writeSingleAssociatedResource(xmlw, publicationRelationTypeF, publicationCitationF, publicationURLF);
+                String publicationRelationType = "";
+                String publicationCitation = "";
+                String publicationURL = "";
+                String type = "";
+                if (publicationRelationTypeF != null) {
+                    publicationRelationType = ((ControlledVocabularyField) publicationRelationTypeF).getSingleValue();
+                    if (publicationRelationType.equals("IsCitedBy") || publicationRelationType.equals("Cites") ||
+                            publicationRelationType.equals("IsReferencedBy") || publicationRelationType.equals("References")) {
+                        type = "crossReference";
+                    } else if (publicationRelationType.equals("IsSupplementedBy") || publicationRelationType.equals("IsSupplementTo")) {
+                        type = "dependency";
+                    }
+                }
+                if (publicationCitationF != null) {
+                    publicationCitation = ((PrimitiveField) publicationCitationF).getSingleValue();
+                }
+                if (publicationURLF != null) {
+                    publicationURL = ((PrimitiveField) publicationURLF).getSingleValue();
+                }
+
+                //writeSingleAssociatedResource(xmlw, publicationRelationTypeF, publicationCitationF, publicationURLF, prop);
+                writeSingleAssociatedRes(xmlw, publicationCitation, publicationURL, type, null, null);
             }
         }
         logger.info("Writing associated resource End");
     }
 
-    private static void writeSingleAssociatedResource(XMLStreamWriter xmlw, Field publicationRelationTypeF, Field publicationCitationF, Field publicationURLF) throws XMLStreamException {
+    private static void writeSingleAssociatedRes(XMLStreamWriter xmlw,String title, String url, String type, String desc, String name) throws XMLStreamException {
+        xmlw.writeStartElement("mri:associatedResource");
+        xmlw.writeStartElement("mri:MD_AssociatedResource");
+        xmlw.writeStartElement("mri:name");
+        xmlw.writeStartElement("cit:CI_Citation");
+        xmlw.writeStartElement("cit:title");
+        if (title != null && !title.trim().isEmpty()) {
+            xmlw.writeStartElement("gco:CharacterString");
+            xmlw.writeCharacters(title);
+            xmlw.writeEndElement(); //gco:CharacterString
+        }
+        xmlw.writeEndElement(); //cit:title
+        if (url != null && !url.trim().isEmpty()) {
+                xmlw.writeStartElement("cit:onlineResource");
+                writeOnlineResource(xmlw, url, "https", desc, name, null);
+                xmlw.writeEndElement(); //cit:onlineResource
+        }
+        xmlw.writeEndElement(); //cit:CI_Citation
+        xmlw.writeEndElement(); //mri:name
+
+        if (type != null && !type.trim().isEmpty()) {
+            xmlw.writeStartElement("mri:associationType");
+            xmlw.writeStartElement("mri:DS_AssociationTypeCode");
+
+            xmlw.writeAttribute("codeList","http://standards.iso.org/iso/19115/resources/Codelist/cat/codelists.xml#DS_AssociationTypeCode");
+            xmlw.writeAttribute("codeListValue",type);
+            xmlw.writeAttribute("codeSpace", "http://standards.iso.org/iso/19115");
+
+            xmlw.writeEndElement(); //mri:DS_AssociationTypeCode
+            xmlw.writeEndElement(); //mri:associationType
+        }
+        xmlw.writeEndElement(); //mri:associatedResource
+        xmlw.writeEndElement(); //mri:MD_AssociatedResource
+        //logger.info("Writing single associated resource End");
+    }
+
+    private static void writeSingleAssociatedResource(XMLStreamWriter xmlw, Field publicationRelationTypeF, Field publicationCitationF, Field publicationURLF, Properties prop) throws XMLStreamException {
         logger.info("Writing single associated resource");
         String publicationRelationType = "";
         String publicationCitation = "";
@@ -2457,7 +2550,7 @@ public class ISO19115_3ExportUtil {
         }
     }
 
-    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF, ArrayList<DataverseFiles> dataverseFiles, String newOtherId) throws XMLStreamException {
+    private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF, ArrayList<DataverseFiles> dataverseFiles, String newOtherId, Properties prop) throws XMLStreamException {
         logger.info("writeDistributionInfo");
         List<HashMap<String, Field>> distribution = null;
         List<HashMap<String, Field>> distibutor = null;
@@ -2506,7 +2599,7 @@ public class ISO19115_3ExportUtil {
                 //Add zip file link
                 if (dataverseFiles != null) {
                     logger.info("newOtherId:" + newOtherId);
-                    String serverName = "https://dvdev.scholarsportal.info";
+                    String serverName = prop.getProperty("DATAVERSE_URL");
                     String url = serverName + "/api/access/datafiles/";
                     ArrayList fileIds = new ArrayList();
                     boolean restricted = false;

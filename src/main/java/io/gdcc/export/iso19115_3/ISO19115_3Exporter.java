@@ -61,6 +61,8 @@ public class ISO19115_3Exporter implements Exporter {
                 // ISO19115_3ExportUtil.datasetISO19115_3(ddiInputStream, outputStream);
             } catch (IOException e) {
                 throw new ExportException("Cannot open export_dataverse_json cached file");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
 //            } catch (XMLStreamException xse) {
 //                throw new ExportException("Caught XMLStreamException performing DDI export");
