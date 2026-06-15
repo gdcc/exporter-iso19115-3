@@ -41,6 +41,7 @@ import java.io.*;
 
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.regex.*;
 
 import java.net.UnknownHostException;
 import java.util.*;
@@ -1338,7 +1339,13 @@ public class ISO19115_3ExportUtil {
             for (DataverseFiles file : dataverseFiles) {
                 if (file.getDirectoryLabel() != null && (file.getDirectoryLabel().equals("associatedResource"))) {
                     String url = serverName + "/api/access/datafile/" + Integer.toString(file.getDataFile().getId());
-                    writeSingleAssociatedRes(xmlw, file.getLabel(), url, "dependency", file.getDescription(), file.getLabel());
+                    String title = file.getDescription();
+                    if (title == null || title.isEmpty()) {
+                        title = file.getLabel();
+                    } else {
+                        title = title.substring(0, Math.min(title.length(), 255)); // Make title from description but limit to 255 characters
+                    }
+                    writeSingleAssociatedRes(xmlw, title, url, "dependency", file.getDescription(), file.getLabel());
                 }
             }
 
@@ -1363,12 +1370,19 @@ public class ISO19115_3ExportUtil {
                     xmlw.writeStartElement("cit:CI_Citation");
                     xmlw.writeStartElement("cit:title");
                     xmlw.writeStartElement("gco:CharacterString");
-                    xmlw.writeCharacters(file.getLabel());
+                    String title = "";
+                    String description = file.getDescription();
+                    if ((description == null || description.isEmpty())) {
+                        title = file.getLabel();
+                    } else  {
+                        title = description.substring(0, Math.min(description.length(), 255)); // Make title from description but limit to 255 characters
+                    }
+                    xmlw.writeCharacters(title);
                     xmlw.writeEndElement(); //gco:CharacterString
                     xmlw.writeEndElement(); //cit:title
                     String url = serverName + "/api/access/datafile/" + Integer.toString(file.getDataFile().getId());
                     xmlw.writeStartElement("cit:onlineResource");
-                    String description = file.getDescription();
+
                     if ((description == null || description.isEmpty()) && file.getRestricted()) {
                         description = "(restricted)";
                     } else if (file.getRestricted()) {
@@ -1477,6 +1491,7 @@ public class ISO19115_3ExportUtil {
         xmlw.writeStartElement("mri:name");
         xmlw.writeStartElement("cit:CI_Citation");
         xmlw.writeStartElement("cit:title");
+
         if (title != null && !title.trim().isEmpty()) {
             xmlw.writeStartElement("gco:CharacterString");
             xmlw.writeCharacters(title);
@@ -2126,100 +2141,117 @@ public class ISO19115_3ExportUtil {
         }
     }
 
+    private static void writeExtentDescription(XMLStreamWriter xmlw, String otherGeographicCoverage) throws XMLStreamException {
+        xmlw.writeStartElement("mri:extent");
+        xmlw.writeStartElement("gex:EX_Extent");
+        xmlw.writeStartElement("gex:description");
+        xmlw.writeStartElement("gco:CharacterString");
+        xmlw.writeCharacters(otherGeographicCoverage);
+        xmlw.writeEndElement(); //gco:CharacterString
+        xmlw.writeEndElement(); //gex:description
+        xmlw.writeEndElement(); //gex:EX_Extent
+        xmlw.writeEndElement(); //mri:extent
+    }
+    private static void writeExtentBoundingBox(XMLStreamWriter xmlw, String westLongitudeValue, String eastLongitudeValue, String northLatitudeValue, String southLatitudeValue) throws XMLStreamException {
+        xmlw.writeStartElement("mri:extent");
+        xmlw.writeStartElement("gex:EX_Extent");
+
+        xmlw.writeStartElement("gex:geographicElement");
+        xmlw.writeStartElement("gex:EX_GeographicBoundingBox");
+
+
+        xmlw.writeStartElement("gex:westBoundLongitude");
+        xmlw.writeStartElement("gco:Decimal");
+        xmlw.writeCharacters(westLongitudeValue);
+        xmlw.writeEndElement(); //gco:Decimal
+        xmlw.writeEndElement();//gex:westBoundLongitude
+
+
+        xmlw.writeStartElement("gex:eastBoundLongitude");
+        xmlw.writeStartElement("gco:Decimal");
+        xmlw.writeCharacters(eastLongitudeValue);
+        xmlw.writeEndElement(); //gco:Decimal
+        xmlw.writeEndElement();//gex:eastBoundLongitude
+
+        xmlw.writeStartElement("gex:southBoundLatitude");
+        xmlw.writeStartElement("gco:Decimal");
+        xmlw.writeCharacters(southLatitudeValue);
+        xmlw.writeEndElement(); //gco:Decimal
+        xmlw.writeEndElement(); //gex:southBoundLatitude
+
+        xmlw.writeStartElement("gex:northBoundLatitude");
+        xmlw.writeStartElement("gco:Decimal");
+        xmlw.writeCharacters(northLatitudeValue);
+        xmlw.writeEndElement(); //gco:Decimal
+        xmlw.writeEndElement(); //gex:northBoundLatitude
+
+        xmlw.writeEndElement(); //ex:EX_GeographicBoundingBox
+        xmlw.writeEndElement(); //gex:geographicElement
+
+        xmlw.writeEndElement(); //gex:EX_Extent
+        xmlw.writeEndElement(); //mri:extent
+    }
     private static void writeExtent(XMLStreamWriter xmlw, Field geographicBoundingBoxF, Field timePeriodCoveredF,
                                     Field geographicCoverageF) throws XMLStreamException {
         logger.info("writeExtent");
-        /* Only 1 geoBndBox is
-           So, I'm just going to arbitrarily use the first one, and ignore the rest! */
+        //Other and bounding box have to have the same cardinality
+        // (they have to be repeatable the same number of time since Othe is used for description of the extent)
 
+        List<HashMap<String, Field>> geoCovArray = null;
+        List<HashMap<String, Field>> bndBoxMapArray = null;
+        if (geographicCoverageF != null ) {
+            geoCovArray = ((CompoundField) geographicCoverageF).getMultipleValues();
+        }
+        if (geographicBoundingBoxF != null) {
+            bndBoxMapArray = ((CompoundField) geographicBoundingBoxF).getMultipleValues();
+        }
 
-        if (geographicCoverageF != null) {
-            HashMap<String, Field> foo = ((CompoundField) geographicCoverageF).getMultipleValues().get(0); //for now
-            Field otherGeographicCoverageF = foo.get("otherGeographicCoverage");
-            if (otherGeographicCoverageF != null) {
-                //cit:description/gco:CharacterString
-                String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
-                if (otherGeographicCoverage != null && !otherGeographicCoverage.isEmpty()) {
-
-                    xmlw.writeStartElement("mri:extent");
-                    xmlw.writeStartElement("gex:EX_Extent");
-                    xmlw.writeStartElement("gex:description");
-                    xmlw.writeStartElement("gco:CharacterString");
-                    xmlw.writeCharacters(otherGeographicCoverage);
-                    xmlw.writeEndElement(); //gco:CharacterString
-                    xmlw.writeEndElement(); //gex:description
-                    xmlw.writeEndElement(); //gex:EX_Extent
-                    xmlw.writeEndElement(); //mri:extent
+        if (geoCovArray != null) {
+            for (HashMap<String, Field> geoCov : geoCovArray) {
+                Field otherGeographicCoverageF = geoCov.get("otherGeographicCoverage");
+                if (otherGeographicCoverageF != null) {
+                    String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
+                    if (otherGeographicCoverage != null && !otherGeographicCoverage.isEmpty()) {
+                        writeExtentDescription(xmlw, otherGeographicCoverage);
+                    }
                 }
             }
         }
 
-        if (geographicBoundingBoxF != null) {
-            xmlw.writeStartElement("mri:extent");
-            xmlw.writeStartElement("gex:EX_Extent");
-            HashMap<String, Field> bndBoxMap = ((CompoundField) geographicBoundingBoxF).getMultipleValues().get(0);
-            Field westLongitudeF = bndBoxMap.get("westLongitude");
-            Field eastLongitudeF = bndBoxMap.get("eastLongitude");
-            Field northLatitudeF = bndBoxMap.get("northLatitude");
-            Field southLatitudeF = bndBoxMap.get("southLatitude");
+        if (bndBoxMapArray != null) {
+            for (HashMap<String, Field> bndBoxMap : bndBoxMapArray) {
+                Field westLongitudeF = bndBoxMap.get("westLongitude");
+                Field eastLongitudeF = bndBoxMap.get("eastLongitude");
+                Field northLatitudeF = bndBoxMap.get("northLatitude");
+                Field southLatitudeF = bndBoxMap.get("southLatitude");
 
-            String westLongitudeValue = "";
-            String eastLongitudeValue = "";
-            String northLatitudeValue = "";
-            String southLatitudeValue = "";
-            if (westLongitudeF != null) {
-                westLongitudeValue = ((PrimitiveField) westLongitudeF).getSingleValue();
+                String westLongitudeValue = "";
+                String eastLongitudeValue = "";
+                String northLatitudeValue = "";
+                String southLatitudeValue = "";
+                if (westLongitudeF != null) {
+                    westLongitudeValue = ((PrimitiveField) westLongitudeF).getSingleValue();
+                }
+                if (eastLongitudeF != null) {
+                    eastLongitudeValue = ((PrimitiveField) eastLongitudeF).getSingleValue();
+                }
+                if (northLatitudeF != null) {
+                    northLatitudeValue = ((PrimitiveField) northLatitudeF).getSingleValue();
+                }
+                if (southLatitudeF != null) {
+                    southLatitudeValue = ((PrimitiveField) southLatitudeF).getSingleValue();
+                }
+
+                if ((!westLongitudeValue.isEmpty() && !eastLongitudeValue.isEmpty() &&
+                        !northLatitudeValue.isEmpty() && !southLatitudeValue.isEmpty())) {
+                    writeExtentBoundingBox(xmlw, westLongitudeValue, eastLongitudeValue, northLatitudeValue, southLatitudeValue);
+                }
             }
-            if (eastLongitudeF != null) {
-                eastLongitudeValue = ((PrimitiveField) eastLongitudeF).getSingleValue();
-            }
-            if (northLatitudeF != null) {
-                northLatitudeValue = ((PrimitiveField) northLatitudeF).getSingleValue();
-            }
-            if (southLatitudeF != null) {
-                southLatitudeValue = ((PrimitiveField) southLatitudeF).getSingleValue();
-            }
-
-
-            xmlw.writeStartElement("gex:geographicElement");
-            xmlw.writeStartElement("gex:EX_GeographicBoundingBox");
-
-
-            xmlw.writeStartElement("gex:westBoundLongitude");
-            xmlw.writeStartElement("gco:Decimal");
-            xmlw.writeCharacters(westLongitudeValue);
-            xmlw.writeEndElement(); //gco:Decimal
-            xmlw.writeEndElement();//gex:westBoundLongitude
-
-
-            xmlw.writeStartElement("gex:eastBoundLongitude");
-            xmlw.writeStartElement("gco:Decimal");
-            xmlw.writeCharacters(eastLongitudeValue);
-            xmlw.writeEndElement(); //gco:Decimal
-            xmlw.writeEndElement();//gex:eastBoundLongitude
-
-            xmlw.writeStartElement("gex:southBoundLatitude");
-            xmlw.writeStartElement("gco:Decimal");
-            xmlw.writeCharacters(southLatitudeValue);
-            xmlw.writeEndElement(); //gco:Decimal
-            xmlw.writeEndElement(); //gex:southBoundLatitude
-
-            xmlw.writeStartElement("gex:northBoundLatitude");
-            xmlw.writeStartElement("gco:Decimal");
-            xmlw.writeCharacters(northLatitudeValue);
-            xmlw.writeEndElement(); //gco:Decimal
-            xmlw.writeEndElement(); //gex:northBoundLatitude
-
-            xmlw.writeEndElement(); //ex:EX_GeographicBoundingBox
-            xmlw.writeEndElement(); //gex:geographicElement
-            xmlw.writeEndElement(); //gex:EX_Extent
-            xmlw.writeEndElement(); //mri:extent
 
         }
         if (timePeriodCoveredF != null) {
             writeTimePeriod(xmlw, timePeriodCoveredF );
         }
-
 
         logger.info("writeExtent End");
     }
@@ -2350,32 +2382,39 @@ public class ISO19115_3ExportUtil {
     private static HashMap<String, List<String>> addGeographicKeyword(HashMap<String, List<String>> mapTypeField,
                                                           Field geographicCoverageF, Field geographicUnitF) {
         if (geographicCoverageF != null) {
-            HashMap<String, Field> geoCov = ((CompoundField) geographicCoverageF).getMultipleValues().get(0);
-            Field countryF = geoCov.get("country");
-            if (countryF != null) {
-                String country = ((ControlledVocabularyField) countryF).getSingleValue();
-                addKeywordToMap(mapTypeField, country, "dataverseLocation");
-            }
-            Field stateF = geoCov.get("state");
-            if (stateF != null) {
-                String state = ((PrimitiveField) stateF).getSingleValue();
-                addKeywordToMap(mapTypeField, state, "dataverseLocation");
-            }
-            Field cityF = geoCov.get("city");
-            if (cityF != null) {
-                String city = ((PrimitiveField) cityF).getSingleValue();
-                addKeywordToMap(mapTypeField, city, "dataverseLocation");
-            }
-            Field otherGeographicCoverageF = geoCov.get("otherGeographicCoverage");
-            if (otherGeographicCoverageF != null) {
-                String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
-                addKeywordToMap(mapTypeField, otherGeographicCoverage, "dataverseLocation");
+            List<HashMap<String, Field>> geoCovArray = ((CompoundField) geographicCoverageF).getMultipleValues();
+            //HashMap<String, Field> geoCov = ((CompoundField) geographicCoverageF).getMultipleValues().get(0);
+            for (HashMap<String, Field> geoCov : geoCovArray) {
+                Field countryF = geoCov.get("country");
+                if (countryF != null) {
+                    String country = ((ControlledVocabularyField) countryF).getSingleValue();
+                    addKeywordToMap(mapTypeField, country, "dataverseLocation");
+                }
+                Field stateF = geoCov.get("state");
+                if (stateF != null) {
+                    String state = ((PrimitiveField) stateF).getSingleValue();
+                    addKeywordToMap(mapTypeField, state, "dataverseLocation");
+                }
+                Field cityF = geoCov.get("city");
+                if (cityF != null) {
+                    String city = ((PrimitiveField) cityF).getSingleValue();
+                    addKeywordToMap(mapTypeField, city, "dataverseLocation");
+                }
+                Field otherGeographicCoverageF = geoCov.get("otherGeographicCoverage");
+                if (otherGeographicCoverageF != null) {
+                    String otherGeographicCoverage = ((PrimitiveField) otherGeographicCoverageF).getSingleValue();
+                    addKeywordToMap(mapTypeField, otherGeographicCoverage, "dataverseLocation");
+                }
             }
 
         }
         if (geographicUnitF != null) {
-            String geoUnit = ((PrimitiveField) geographicUnitF).getMultipleValues().get(0);
-            addKeywordToMap(mapTypeField, geoUnit, "dataverseGeographicUnit");
+            List<String> geoUnitArray = ((PrimitiveField) geographicUnitF).getMultipleValues();
+            for (String geoUnit : geoUnitArray) {
+                addKeywordToMap(mapTypeField, geoUnit, "dataverseGeographicUnit");
+            }
+            //String geoUnit = ((PrimitiveField) geographicUnitF).getMultipleValues().get(0);
+            //addKeywordToMap(mapTypeField, geoUnit, "dataverseGeographicUnit");
         }
 
         return mapTypeField;
@@ -2550,6 +2589,31 @@ public class ISO19115_3ExportUtil {
         }
     }
 
+    private static String getZipUrl(ArrayList<DataverseFiles> fileIds, String basicUrl) {
+        String url = basicUrl;
+        int numOfFiles = fileIds.size();
+        int i = 1;
+        for (DataverseFiles file : (ArrayList<DataverseFiles>) fileIds) {
+            url = url + Integer.toString(file.getDataFile().getId());
+            if (i < numOfFiles) {
+                url = url + ",";
+            }
+            i++;
+        }
+        return url;
+    }
+
+    private static boolean checkRestricted(ArrayList<DataverseFiles> fileList) {
+        boolean restricted = false;
+        for (DataverseFiles file : (ArrayList<DataverseFiles>) fileList) {
+            if (file.getRestricted()) {
+                restricted = true;
+                break;
+            }
+        }
+        return restricted;
+    }
+
     private static void writeDistributionInfo(XMLStreamWriter xmlw, Field distributionF, Field distributorF, ArrayList<DataverseFiles> dataverseFiles, String newOtherId, Properties prop) throws XMLStreamException {
         logger.info("writeDistributionInfo");
         List<HashMap<String, Field>> distribution = null;
@@ -2599,39 +2663,68 @@ public class ISO19115_3ExportUtil {
                 //Add zip file link
                 if (dataverseFiles != null) {
                     logger.info("newOtherId:" + newOtherId);
+                    HashMap<String, ArrayList<DataverseFiles>> zipFiles = new HashMap<>();
                     String serverName = prop.getProperty("DATAVERSE_URL");
                     String url = serverName + "/api/access/datafiles/";
-                    ArrayList fileIds = new ArrayList();
+                    ArrayList<DataverseFiles> files = new ArrayList();
                     boolean restricted = false;
                     for (DataverseFiles file : dataverseFiles) {
                         //logger.info(file.getDirectoryLabel());
                         if (file.getDirectoryLabel() != null && file.getDirectoryLabel().startsWith(newOtherId)) {
-                            if (file.getRestricted()) {
-                                restricted = true;
+                            String desc = file.getDescription();
+                            if (desc == null) {
+                                desc = "";
                             }
-                            String file_id = Integer.toString(file.getDataFile().getId());
-                            fileIds.add(file_id);
-                        }
-                    }
-                    int i = 1;
-                    int numOfFiles = fileIds.size();
-                    for (String fileId : (ArrayList<String>) fileIds) {
-                        url = url + fileId;
-                        if (i < numOfFiles) {
-                            url = url + ",";
-                        }
-                        i++;
-                    }
-                    if (i > 1) {
-                        url = url + "?format=original";
 
-                        xmlw.writeStartElement("mrd:onLine");
-                        String description = "Zip file";
-                        if (restricted) {
-                            description = description + " (restricted)";
+                            Pattern pattern = Pattern.compile("\\(zip(\\d+)\\)");
+                            Matcher matcher = pattern.matcher(desc);
+
+                            if (matcher.find()) {
+                                String numberStr = matcher.group(1);  // the captured number
+
+                                if (zipFiles.containsKey(numberStr)) {
+                                    ArrayList<DataverseFiles> fileList = zipFiles.get(numberStr);
+                                    fileList.add(file);
+                                    zipFiles.put(numberStr, fileList);
+                                } else {
+                                    ArrayList<DataverseFiles> fileList = new ArrayList<>();
+                                    fileList.add(file);
+                                    zipFiles.put(numberStr, fileList);
+                                }
+
+                            } else {
+                                if (zipFiles.containsKey("")) {
+                                    ArrayList<DataverseFiles> fileList = zipFiles.get("");
+                                    fileList.add(file);
+                                    zipFiles.put("", fileList);
+                                } else {
+                                    ArrayList<DataverseFiles> fileList = new ArrayList<>();
+                                    fileList.add(file);
+                                    zipFiles.put("", fileList);
+                                }
+                            }
                         }
-                        writeOnlineResource(xmlw, url, "https", description, null, null);
-                        xmlw.writeEndElement(); //mrd:onLine
+                    }
+                    String urlZip = "";
+                    for (String key : zipFiles.keySet()) {
+                        ArrayList<DataverseFiles> fileList = zipFiles.get(key);
+                        restricted = checkRestricted(fileList);
+                        urlZip = getZipUrl(fileList, url);
+
+                        if (!urlZip.isEmpty()) {
+                            urlZip = urlZip + "?format=original";
+                            String description = fileList.get(0).getDescription();
+                            if (restricted) {
+                                if (!description.isEmpty()) {
+                                    description = description + " (restricted)";
+                                } else {
+                                    description = "Zip file (restricted)";
+                                }
+                            }
+                            xmlw.writeStartElement("mrd:onLine");
+                            writeOnlineResource(xmlw, urlZip, "https", description, null, null);
+                            xmlw.writeEndElement(); //mrd:onLine
+                        }
                     }
                 }
 
